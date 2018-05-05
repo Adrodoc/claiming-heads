@@ -1,9 +1,9 @@
 -- claiming/cities.lua
 
--- require('mickkay.cities').get():createCity(pos)
+-- require('claiming.cities').get():createCity(pos)
 local module = ...
-require "mickkay.wol.Spell"
 local datastore = require "claiming.datastore"
+require "claiming.singleton"
 
 -- Constants:
 local CITIES_CMD = module..".command"
@@ -37,7 +37,6 @@ local updatePlayers
 local updatePlayer
 local isForbidden
 local findSmallestCityRingIndex
-local singleton
 local log
 
 declare("Cities")
@@ -218,7 +217,7 @@ function pkg.start( aDataPos)
   if not aDataPos then
     error("Missing required argument: dataPos")
   end
-  spell:singleton(module)
+  singleton(module)
   log("Starting %s", module)
   
   spell.data.cities = Cities.new({dataPos=aDataPos})
@@ -296,12 +295,6 @@ function isInsideCenter( city, pos)
   local dist = offset:magnitude()
   return dist <= city.ringWidth;
 end
-
-function singleton()
-  spell:execute([[/wol spell break byName %s]], module)
-  spell.name = module
-end
-
 
 return pkg
 

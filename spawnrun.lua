@@ -12,6 +12,7 @@
 local module = ...
 local signalrocket = require "claiming.signalrocket"
 local cities = require("claiming.cities").get()
+require "claiming.singleton"
 
 local pkg = {}
 -- Forward declarations of local functions:
@@ -28,13 +29,12 @@ local getTagValue
 local strStarts
 local setSpawnPoint
 local teleport
-local singleton
 local giveHead
 local log
 
 -- 
 function pkg.start()
-  
+  singleton(module) 
   Events.on("LivingDeathEvent"):call(
     function(event)
       if event.name == "LivingDeathEvent" and type(event.entity)=="Player" then
@@ -290,11 +290,6 @@ function strStarts( str, prefix)
   local len = string.len(prefix)
   local sub = string.sub(str,1,len)
   return sub == prefix
-end
-
-function singleton()
-  spell:execute([[/wol spell break byName %s]], module)
-  spell.name = module
 end
 
 function giveHead(player)

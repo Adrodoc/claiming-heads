@@ -9,11 +9,11 @@ local module = ...
 
 local setmultimap = require "claiming.setmultimap"
 local datastore = require "claiming.datastore"
+require "claiming.singleton"
 
 local pkg = {}
 
 
-local singleton
 local getChunksIntersecting
 local updatePlayer
 local removeBrokenHeads
@@ -92,7 +92,7 @@ end
 
 function pkg.start(storePos, options, funcCanClaimPos) 
   storePos = storePos or spell.pos
-  singleton()
+  singleton(module)
   options = options or {}
   local width = options.width or 16
   local frequency = options.frequency or 1
@@ -135,7 +135,7 @@ Options:
 ]]
 
 function pkg.stop() 
-  spell:singleton(module)
+  singleton(module)
 end
 Help.on(pkg.stop) [[
 Disables 'claiming' of areas. Existing areas are kept persistent.
@@ -320,11 +320,6 @@ function getChunksIntersecting(pos, width)
     end
   end
   return result
-end
-
-function singleton()
-  spell:execute([[/wol spell break byName %s]], module)
-  spell.name = module
 end
 
 return pkg
