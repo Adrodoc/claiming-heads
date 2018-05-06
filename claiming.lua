@@ -90,6 +90,17 @@ function pkg.get()
   return result.data.claims
 end
 
+--[[
+Allows players to 'claim' an area by placing their own head in the center of it.
+An area is protected by setting other players that enter the area into adventure mode.
+Areas can be shared between multiple players by placing multiple heads on top of each other (same x and z coordinate).
+If two areas overlap each other, the intersection is protected from both players.
+
+Options:
+  - width: How many blocks around the skull are protected. Default is 16 which results in 33x33 areas.
+  - frequency: Every 'frequency' ticks the gamemodes of players are updated and all skulls are checked to make sure they are still there.
+  - funcCanClaimPos: This must be a function of Vec3, that returns false, if it is (for any reason) not allowed to claim the area at this point.
+]]--
 function pkg.start(storePos, options, funcCanClaimPos) 
   storePos = storePos or spell.pos
   singleton(module)
@@ -125,22 +136,11 @@ function pkg.start(storePos, options, funcCanClaimPos)
     end
   end
 end
-Help.on(pkg.start) [[
-Allows players to 'claim' an area by placing their own head in the center of it. An area is protected by setting other players that enter the area into adventure mode. Areas can be shared between multiple players by placing multiple heads on top of each other (same x and z coordinate). If two areas overlap each other, the intersection is protected from both players.
 
-Options:
-  - width: How many blocks around the skull are protected. Default is 16 which results in 33x33 areas.
-  
-  - frequency: Every 'frequency' ticks the gamemodes of players are updated and all skulls are checked to make sure they are still there.
-]]
-
+-- Disables 'claiming' of areas. Existing areas are kept persistent.
 function pkg.stop() 
   singleton(module)
 end
-Help.on(pkg.stop) [[
-Disables 'claiming' of areas. Existing areas are kept persistent.
-]]
-
 
 function updatePlayer(player)
   if player.dimension ~= 0 then
