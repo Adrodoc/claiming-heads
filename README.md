@@ -6,11 +6,16 @@ Any player can claim an area simply by placing a player skull into the world.
 
 ## How to Get a Player Skull?
 ### By Command
-This is done with the following Minecraft command:
+Just execute the following Minecraft command:
 ```
 /give PLAYER skull 1 3 {SkullOwner:"PLAYER"}
 ```
 Please replace PLAYER with the appropriate name.
 
 ### By Finishing A Spawn Run
-TODO
+The Spawn Run is a sort of mini game that a player can play to gain a player skull.
+
+* TODO how to start the Spawn Run?
+* TODO Rules of the Spawn Run
+
+
