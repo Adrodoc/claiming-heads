@@ -9,7 +9,7 @@ local pkg = {}
 
 function pkg.start(width, frequency)
   singleton(module)
-  width = width or 1
+  width = width or 16
   frequency = frequency or 20
   Events.on('BlockPlaceEvent', 'BlockBreakEvent'):call(function(event)
     if not pkg.mayBuild(event.player, event.pos) then
