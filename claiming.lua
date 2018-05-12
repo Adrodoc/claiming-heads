@@ -14,6 +14,7 @@ function pkg.start(width, frequency)
   Events.on('BlockPlaceEvent', 'BlockBreakEvent'):call(function(event)
     if not pkg.mayBuild(event.player, event.pos) then
       event.canceled = true
+      spell:execute('tellraw '..event.player.name..' {"text":"This area is claimed by someone else","color":"gold"}')
     end
   end)
   Events.on('BlockPlaceEvent'):call(function(event)
