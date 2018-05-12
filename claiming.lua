@@ -7,6 +7,73 @@ local singleton = require "claiming.singleton"
 
 local pkg = {}
 
+function pkg.start(width, frequency)
+  singleton(module)
+  width = width or 1
+  frequency = frequency or 20
+  Events.on('BlockPlaceEvent', 'BlockBreakEvent'):call(function(event)
+    if not pkg.mayBuild(event.player, event.pos) then
+      event.canceled = true
+    end
+  end)
+  Events.on('BlockPlaceEvent'):call(function(event)
+    local block = spell:getBlock(event.pos) -- Workaround for https://github.com/wizards-of-lua/wizards-of-lua/issues/188
+    local ownerId = HeadClaim.getHeadOwnerId(block)
+    if ownerId then
+      local pos = event.pos
+      local claim = HeadClaim.new(pos, width, ownerId)
+      if pkg.overlapsWithForeignClaim(claim, event.player) then
+        event.canceled = true
+        spell:execute('tellraw '..event.player.name..' {"text":"This claim would overlap with a foreign claim","color":"gold"}')
+      else
+        pkg.addClaim(claim)
+      end
+    end
+  end)
+  while true do
+    local players = Entities.find('@a')
+    for _, player in pairs(players) do
+      pkg.updatePlayer(player)
+    end
+    sleep(frequency)
+  end
+end
+
+--[[
+Returns true if the claim overlaps with another claim that the claimer is not allowed to build in at all (not even partially)
+]]
+function pkg.overlapsWithForeignClaim(claim, claimer)
+  return pkg.overlapsWith(claim, function(claim)
+    return not pkg.overlapsWithOwnedClaim(claim, claimer)
+  end)
+end
+
+--[[
+Returns true if the claim overlaps with another claim that the claimer is allowed to build in
+]]
+function pkg.overlapsWithOwnedClaim(claim, claimer)
+  return pkg.overlapsWith(claim, function(claim)
+    return claim:mayBuild(claimer)
+  end)
+end
+
+--[[
+Returns true if the claimPredicate returns true for any claim the overlaps with the specified claim
+]]
+function pkg.overlapsWith(claim, claimPredicate)
+  local claimsByChunk = pkg.getClaimsByChunk()
+  local chunks = claim:getChunks()
+  for _, chunk in pairs(chunks) do
+    local claims = claimsByChunk[chunk] or {}
+    for _, otherClaim in pairs(claims) do
+      if otherClaim:isOverlapping(claim) and claimPredicate(otherClaim) then
+        return true
+      end
+    end
+  end
+  return false
+end
+
 spell.data.claiming = {
   claimsByChunk = {}
 }
@@ -29,33 +96,6 @@ function pkg.removeClaim(claim)
   local chunks = claim:getChunks()
   for _, chunk in pairs(chunks) do
     listmultimap.remove(claimsByChunk, chunk, claim)
-  end
-end
-
-function pkg.start(width, frequency)
-  singleton(module)
-  width = width or 1
-  frequency = frequency or 20
-  Events.on('BlockPlaceEvent', 'BlockBreakEvent'):call(function(event)
-    if not pkg.mayBuild(event.player, event.pos) then
-      event.canceled = true
-    end
-  end)
-  Events.on('BlockPlaceEvent'):call(function(event)
-    local block = spell:getBlock(event.pos) -- Workaround for https://github.com/wizards-of-lua/wizards-of-lua/issues/188
-    local ownerId = HeadClaim.getHeadOwnerId(block)
-    if ownerId then
-      local pos = event.pos
-      local claim = HeadClaim.new(pos, width, ownerId)
-      pkg.addClaim(claim)
-    end
-  end)
-  while true do
-    local players = Entities.find('@a')
-    for _, player in pairs(players) do
-      pkg.updatePlayer(player)
-    end
-    sleep(frequency)
   end
 end
 
@@ -102,6 +142,13 @@ function pkg.getApplicableClaims(pos)
   return result
 end
 
+function pkg.getChunk(pos)
+  pos = pos:floor()
+  local chunkX = pos.x // 16
+  local chunkZ = pos.z // 16
+  return chunkX..'/'..chunkZ
+end
+
 function pkg.removeInvalidClaims(claims)
   local invalidClaims = {}
   for _, claim in pairs(claims) do
@@ -112,13 +159,6 @@ function pkg.removeInvalidClaims(claims)
   for _, claim in pairs(invalidClaims) do
     pkg.removeClaim(claim)
   end
-end
-
-function pkg.getChunk(pos)
-  pos = pos:floor()
-  local chunkX = pos.x // 16
-  local chunkZ = pos.z // 16
-  return chunkX..'/'..chunkZ
 end
 
 return pkg

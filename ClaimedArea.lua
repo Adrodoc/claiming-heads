@@ -16,23 +16,27 @@ function ClaimedArea:contains(pos)
   return false
 end
 
-declare('ClaimedRectangle', ClaimedArea)
+function ClaimedArea:isOverlapping(claimedSquare)
+  return false
+end
 
-function ClaimedRectangle.new(pos, width, ownerId)
+declare('ClaimedSquare', ClaimedArea)
+
+function ClaimedSquare.new(pos, width, ownerId)
   local result = {
     ownerId = ownerId,
     pos = pos:floor(),
     width = width
   }
-  setmetatable(result, ClaimedRectangle)
+  setmetatable(result, ClaimedSquare)
   return result
 end
 
-function ClaimedRectangle:mayBuild(player)
+function ClaimedSquare:mayBuild(player)
   return self.ownerId == player.uuid
 end
 
-function ClaimedRectangle:getChunks()
+function ClaimedSquare:getChunks()
   local pos = self.pos
   local width = self.width
   local minChunkX = (pos.x - width) // 16
@@ -48,7 +52,7 @@ function ClaimedRectangle:getChunks()
   return result
 end
 
-function ClaimedRectangle:contains(pos)
+function ClaimedSquare:contains(pos)
   local sPos = self.pos
   local width = self.width
   return sPos.x - width <= pos.x
@@ -57,10 +61,21 @@ function ClaimedRectangle:contains(pos)
      and sPos.z + width + 1 > pos.z
 end
 
-declare('HeadClaim', ClaimedRectangle)
+function ClaimedSquare:isOverlapping(claimedSquare)
+  local sPos = self.pos
+  local sWidth = self.width
+  local oPos = claimedSquare.pos
+  local oWidth = claimedSquare.width
+  return sPos.x - sWidth < oPos.x + oWidth + 1
+     and sPos.z - sWidth < oPos.z + oWidth + 1
+     and sPos.x + sWidth + 1 > oPos.x - oWidth
+     and sPos.z + sWidth + 1 > oPos.z - oWidth
+end
+
+declare('HeadClaim', ClaimedSquare)
 
 function HeadClaim.new(pos, width, ownerId)
-  local result = ClaimedRectangle.new(pos, width, ownerId)
+  local result = ClaimedSquare.new(pos, width, ownerId)
   setmetatable(result, HeadClaim)
   return result
 end
