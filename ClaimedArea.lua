@@ -94,3 +94,7 @@ function HeadClaim:isValid()
   local block = spell:getBlock(self.pos)
   return HeadClaim.getHeadOwnerId(block) == self.ownerId
 end
+
+function HeadClaim:__tostring()
+  return 'claimed area located at '..self.pos.x..' '..self.pos.y..' '..self.pos.z
+end

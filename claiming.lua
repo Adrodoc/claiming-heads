@@ -22,9 +22,10 @@ function pkg.start(width, frequency)
     if ownerId then
       local pos = event.pos
       local claim = HeadClaim.new(pos, width, ownerId)
-      if pkg.overlapsWithForeignClaim(claim, event.player) then
+      local foreignClaim = pkg.getOverlappingForeignClaim(claim, event.player)
+      if foreignClaim then
         event.canceled = true
-        spell:execute('tellraw '..event.player.name..' {"text":"This claim would overlap with a foreign claim","color":"gold"}')
+        spell:execute('tellraw '..event.player.name..' {"text":"This claim would overlap with the foreign '..tostring(foreignClaim)..'","color":"gold"}')
       else
         pkg.addClaim(claim)
       end
@@ -40,38 +41,37 @@ function pkg.start(width, frequency)
 end
 
 --[[
-Returns true if the claim overlaps with another claim that the claimer is not allowed to build in at all (not even partially)
+Returns the first claim that overlaps with the specified claim where the claimer is not allowed to build in at all (not even partially)
 ]]
-function pkg.overlapsWithForeignClaim(claim, claimer)
-  return pkg.overlapsWith(claim, function(claim)
-    return not pkg.overlapsWithOwnedClaim(claim, claimer)
+function pkg.getOverlappingForeignClaim(claim, claimer)
+  return pkg.getOverlappingClaim(claim, function(claim)
+    return not pkg.getOverlappingOwnedClaim(claim, claimer)
   end)
 end
 
 --[[
-Returns true if the claim overlaps with another claim that the claimer is allowed to build in
+Returns the first claim that overlaps with the specified claim where the claimer is allowed to build
 ]]
-function pkg.overlapsWithOwnedClaim(claim, claimer)
-  return pkg.overlapsWith(claim, function(claim)
+function pkg.getOverlappingOwnedClaim(claim, claimer)
+  return pkg.getOverlappingClaim(claim, function(claim)
     return claim:mayBuild(claimer)
   end)
 end
 
 --[[
-Returns true if the claimPredicate returns true for any claim the overlaps with the specified claim
+Returns the first claim that overlaps with the specified claim for which the claimPredicate returns true
 ]]
-function pkg.overlapsWith(claim, claimPredicate)
+function pkg.getOverlappingClaim(claim, claimPredicate)
   local claimsByChunk = pkg.getClaimsByChunk()
   local chunks = claim:getChunks()
   for _, chunk in pairs(chunks) do
     local claims = claimsByChunk[chunk] or {}
     for _, otherClaim in pairs(claims) do
       if otherClaim:isOverlapping(claim) and claimPredicate(otherClaim) then
-        return true
+        return otherClaim
       end
     end
   end
-  return false
 end
 
 spell.data.claiming = {
