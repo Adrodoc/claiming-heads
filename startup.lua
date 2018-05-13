@@ -22,26 +22,34 @@ respective variables CITIES_DATA_STORE_POS and CLAIMING_DATA_STORE_POS below.
 
 ]]--
 
+function toLua(vec)
+  return string.format("Vec3(%s,%s,%s)", vec.x,vec.y,vec.z)
+end
+
+local CITIES_DATA_STORE_POS = CITIES_DATA_STORE_POS or Vec3(751, 75, 355)
+local CLAIMING_DATA_STORE_POS = CLAIMING_DATA_STORE_POS or Vec3(751, 77, 355)
+local CLAIMING_WIDTH = 21
+local CLAIMING_FREQUENCY = 20
+
 -- The Cities
 spell:execute([[
-  /lua local CITIES_DATA_STORE_POS = Vec3(751, 75, 355)
-  require('claiming.cities').start(CITIES_DATA_STORE_POS)
-]])
+  /lua require('claiming.cities').start(%s)
+]], toLua(CITIES_DATA_STORE_POS))
 
 -- The Claiming Spell
 spell:execute([[
-  /lua local CLAIMING_DATA_STORE_POS = Vec3(751, 77, 355)
-  local cities = require("claiming.cities").get()
+  /lua local cities = require("claiming.cities").get()
   local funcCanClaimPos = function(pos)
     return cities:isInsideCityCenter(pos)
   end
   require('claiming.claiming').start(
-    CLAIMING_DATA_STORE_POS,
-    {width=21,frequency=20},
+    %s,
+    {width=%s,frequency=%s},
     funcCanClaimPos
   )
-]])
+]], toLua(CLAIMING_DATA_STORE_POS), CLAIMING_WIDTH, CLAIMING_FREQUENCY)
 
 -- The Spawn Run
 spell:execute("/lua require('claiming.spawnrun').start()")
+
 

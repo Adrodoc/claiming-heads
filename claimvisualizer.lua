@@ -1,6 +1,7 @@
 -- claiming/claimvisualizer.lua
 
 -- /lua require('claiming.claimvisualizer').showBorders(playername, center, width)
+-- /lua cs=require('claiming.claiming').getApplicableClaims(spell.owner.pos) for _,c in pairs(cs) do require('claiming.claimvisualizer').showBorders(spell.owner.name, c.pos, c.width) end
 
 local module = ...
 

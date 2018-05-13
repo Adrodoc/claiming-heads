@@ -1,325 +1,225 @@
--- claiming/claiming.lua
-
--- /lua require('claiming.claiming').start(Vec3(340,83,-834), {width=21,frequency=20})
--- /lua require('claiming.claiming').get()
--- /lua v=require('claiming.claiming').get(); print(inspect(v,{depth=1}))
--- /lua player=spell.owner; require('claiming.claiming').get():getNearestClaim(player);
-
 local module = ...
 
-local setmultimap = require "claiming.setmultimap"
+require 'claiming.ClaimedArea'
+require 'claiming.Spell'
 local datastore = require "claiming.datastore"
-require "claiming.singleton"
+local listmultimap = require "claiming.listmultimap"
+local singleton = require "claiming.singleton"
 
 local pkg = {}
 
+function pkg.start(storePos, options, funcCanClaimPos)
+  options = options or {}
+  local width = options.width or 16
+  local frequency = options.frequency or 20
 
-local getChunksIntersecting
-local updatePlayer
-local removeBrokenHeads
-local onRightClickBlockEvent
-local getBlock
-local isPlayerHead
-local isHeadOfOwner
-local isOverlapping
-local destroy
-
-declare("Claims")
-
-function Claims.new(o)
-  o = o or {}
-  setmetatable(o, Claims)
-  return o
-end
-
-function Claims:saveData()
-  datastore.save(self.storePos, self.heads)
-end
-
-
-function Claims:loadData()
-  local data = datastore.load(self.storePos) or {}
-  self.heads = {}
-  for i,headPos in pairs(data) do
-    table.insert(self.heads,Vec3.new(headPos))
-  end
-  -- Mapping of chunk vector to all head positions with areas that intersect the chunk
-  self.headsByChunk = {}
-  for i,head in pairs(self.heads) do
-    local chunks = getChunksIntersecting(head,self.width)
-    for j,chunk in pairs(chunks) do
-      setmultimap.put(self.headsByChunk, chunk, head)
+  singleton(module)
+  spell.data.claiming = {
+    storePos = storePos,
+    claims = {},
+    claimsByChunk = {}
+  }
+  pkg.loadData()
+  Events.on('BlockPlaceEvent', 'BlockBreakEvent'):call(function(event)
+    if not pkg.mayBuild(event.player, event.pos) then
+      event.canceled = true
+      spell:execute('tellraw '..event.player.name..' {"text":"This area is claimed by someone else","color":"gold"}')
     end
-  end
-end
-
--- returns the center of the nearest claim relative to the given area
-function Claims:getNearestClaim(player)
-  local pos = player.pos
-  local chunkX = pos.x // 16
-  local chunkZ = pos.z // 16
-  local chunk = chunkX..'/'..chunkZ
-  local heads = self.headsByChunk[chunk]
-  local width = self.width
-  local resultDistance
-  local result
-  if heads then
-    for i,head in pairs(heads) do
-      if head.x - width < pos.x
-      and head.z - width < pos.z
-      and head.x + width + 1 > pos.x
-      and head.z + width + 1 > pos.z
-      then
-        local distance = (pos - head):magnitude()
-        if not resultDistance or resultDistance > distance then
-          resultDistance = distance
-          result = head
-        end
+  end)
+  Events.on('BlockPlaceEvent'):call(function(event)
+    local block = spell:getBlock(event.pos) -- Workaround for https://github.com/wizards-of-lua/wizards-of-lua/issues/188
+    local ownerId = HeadClaim.getHeadOwnerId(block)
+    if ownerId then
+      local pos = event.pos
+      if not funcCanClaimPos(pos) then
+        event.canceled = true
+        spell:execute('tellraw '..event.player.name..' {"text":"You are not allowed to claim here","color":"gold"}')
+        return
+      end
+      local claim = HeadClaim.new(pos, width, ownerId)
+      local foreignClaim = pkg.getOverlappingForeignClaim(claim, event.player)
+      if foreignClaim then
+        event.canceled = true
+        spell:execute('tellraw '..event.player.name..' {"text":"This claim would overlap with the foreign '..tostring(foreignClaim)..'","color":"gold"}')
+      else
+        pkg.addClaim(claim)
       end
     end
+  end)
+  while true do
+    local players = Entities.find('@a')
+    for _, player in pairs(players) do
+      pkg.updatePlayer(player)
+    end
+    sleep(frequency)
   end
-  return result
-end
-
-function Claims:getWidth()
-  return self.width
-end
-
-function pkg.get()
-  local result = Spells.find({name=module})[1]
-  return result.data.claims
 end
 
 --[[
-Allows players to 'claim' an area by placing their own head in the center of it.
-An area is protected by setting other players that enter the area into adventure mode.
-Areas can be shared between multiple players by placing multiple heads on top of each other (same x and z coordinate).
-If two areas overlap each other, the intersection is protected from both players.
+Returns the first claim that overlaps with the specified claim where the claimer is not allowed to build in at all (not even partially)
+]]
+function pkg.getOverlappingForeignClaim(claim, claimer)
+  return pkg.getOverlappingClaim(claim, function(claim)
+    return not pkg.getOverlappingOwnedClaim(claim, claimer)
+  end)
+end
 
-Options:
-  - width: How many blocks around the skull are protected. Default is 16 which results in 33x33 areas.
-  - frequency: Every 'frequency' ticks the gamemodes of players are updated and all skulls are checked to make sure they are still there.
-  - funcCanClaimPos: This must be a function of Vec3, that returns false, if it is (for any reason) not allowed to claim the area at this point.
-]]--
-function pkg.start(storePos, options, funcCanClaimPos) 
-  storePos = storePos or spell.pos
-  singleton(module)
-  options = options or {}
-  local width = options.width or 16
-  local frequency = options.frequency or 1
-  
-  spell.data.claims = Claims.new({storePos=storePos, heads = {}, headsByChunk = {}, width=width})
-  spell.data.claims:loadData()
-  
-  local queue = Events.collect("RightClickBlockEvent")
-  local lastCycle = Time.gametime
-  local timeout = frequency
-  while true do
-    local dirty = false
-    local event = queue:next(timeout)
-    local timeSlept = Time.gametime - lastCycle
-    timeout = math.min(timeout, frequency-timeSlept)
-    if timeout < 1 then
-      timeout = frequency
-    end
-    if event then
-      dirty = onRightClickBlockEvent(event, funcCanClaimPos)
-    else
-      local players = Entities.find("@a")
-      for i,player in pairs(players) do
-        updatePlayer(player)
+--[[
+Returns the first claim that overlaps with the specified claim where the claimer is allowed to build
+]]
+function pkg.getOverlappingOwnedClaim(claim, claimer)
+  return pkg.getOverlappingClaim(claim, function(claim)
+    return claim:mayBuild(claimer)
+  end)
+end
+
+--[[
+Returns the first claim that overlaps with the specified claim for which the claimPredicate returns true
+]]
+function pkg.getOverlappingClaim(claim, claimPredicate)
+  local claimsByChunk = pkg.getClaimsByChunk()
+  local chunks = claim:getChunks()
+  for _, chunk in pairs(chunks) do
+    local claims = claimsByChunk[chunk] or {}
+    for _, otherClaim in pairs(claims) do
+      if otherClaim:isOverlapping(claim) and claimPredicate(otherClaim) then
+        return otherClaim
       end
-      dirty = removeBrokenHeads()
-    end
-    if dirty then
-      spell.data.claims:saveData()
     end
   end
 end
 
--- Disables 'claiming' of areas. Existing areas are kept persistent.
-function pkg.stop() 
-  singleton(module)
+local claimingSpell
+function pkg.getClaimingSpell()
+  if claimingSpell == nil then
+    claimingSpell = Spells.find({name=module})[1]
+  end
+  return claimingSpell
 end
 
-function updatePlayer(player)
+local loadDataPending
+function pkg.loadData()
+  loadDataPending = true
+  local storePos = pkg.getStorePos()
+  local data = datastore.load(storePos) or {}
+  for _, serializedClaim in pairs(data) do
+    local claim = HeadClaim.deserialize(serializedClaim)
+    pkg.addClaim(claim)
+  end
+  loadDataPending = false
+end
+
+function pkg.saveData()
+  if loadDataPending then
+    return
+  end
+  local data = {}
+  local claims = pkg.getClaims()
+  for claim, _ in pairs(claims) do
+    local serializedClaim = claim:serialize()
+    table.insert(data, serializedClaim)
+  end
+  local storePos = pkg.getStorePos()
+  datastore.save(storePos, data)
+end
+
+function pkg.getStorePos()
+  local spell = pkg.getClaimingSpell()
+  return spell.data.claiming.storePos
+end
+
+function pkg.getClaims()
+  local spell = pkg.getClaimingSpell()
+  return spell.data.claiming.claims
+end
+
+function pkg.getClaimsByChunk()
+  local spell = pkg.getClaimingSpell()
+  return spell.data.claiming.claimsByChunk
+end
+
+function pkg.addClaim(claim)
+  local claims = pkg.getClaims()
+  claims[claim] = true
+  local claimsByChunk = pkg.getClaimsByChunk()
+  local chunks = claim:getChunks()
+  for _, chunk in pairs(chunks) do
+    listmultimap.put(claimsByChunk, chunk, claim)
+  end
+  pkg.saveData()
+end
+
+function pkg.removeClaim(claim)
+  local claims = pkg.getClaims()
+  claims[claim] = nil
+  local claimsByChunk = pkg.getClaimsByChunk()
+  local chunks = claim:getChunks()
+  for _, chunk in pairs(chunks) do
+    listmultimap.remove(claimsByChunk, chunk, claim)
+  end
+  pkg.saveData()
+end
+
+function pkg.updatePlayer(player)
   if player.dimension ~= 0 then
-    if player.gamemode == "adventure" then
-      player.gamemode = "survival"
+    if player.gamemode == 'adventure' then
+      player.gamemode = 'survival'
     end
     return -- claiming is only supported in the overworld
   end
-  local pos = player.pos
-  local chunkX = pos.x // 16
-  local chunkZ = pos.z // 16
-  local chunk = chunkX..'/'..chunkZ
-  local heads = spell.data.claims.headsByChunk[chunk]
-  
-  local ownHeadsXZ = {}
-  local foreignHeadsXZ = {}
-  local width = spell.data.claims.width
-  if heads then
-    for i,head in pairs(heads) do
-      if head.x - width < pos.x
-      and head.z - width < pos.z
-      and head.x + width + 1 > pos.x
-      and head.z + width + 1 > pos.z
-      then
-        local xz = head.x.."/"..head.z
-        local block = getBlock(head)
-        if isPlayerHead(block) then
-          if isHeadOfOwner(block, player.name) then
-            ownHeadsXZ[xz] = true
-          else
-            foreignHeadsXZ[xz] = true
-          end
-        end
-      end
+  local mayBuild = pkg.mayBuild(player)
+  if mayBuild and player.gamemode == 'adventure' then
+    player.gamemode = 'survival'
+  elseif not mayBuild and player.gamemode == 'survival' then
+    player.gamemode = 'adventure'
+  end
+end
+
+function pkg.mayBuild(player, pos)
+  pos = pos or player.pos
+  local claims = pkg.getApplicableClaims(pos)
+  if next(claims) == nil then
+    return true
+  end
+  for _, claim in pairs(claims) do
+    if claim:mayBuild(player) then
+      return true
     end
   end
-  for xz,_ in pairs(ownHeadsXZ) do
-    foreignHeadsXZ[xz] = nil
-  end
-  local mayBuild = next(foreignHeadsXZ) == nil
-  if not mayBuild and player.gamemode == "survival" then
-    player.gamemode = "adventure"
-  elseif mayBuild and player.gamemode == "adventure" then
-    player.gamemode = "survival"
-  end
+  return false
 end
 
-
-function removeBrokenHeads()
-  local dirty = false
-  local heads = spell.data.claims.heads
-  local headsByChunk = spell.data.claims.headsByChunk
-  local width = spell.data.claims.width
-  for i=#heads,1,-1 do
-    local head = heads[i]
-    if head then -- paranoia null check
-      local block = getBlock(head)
-      if not isPlayerHead(block) then
-        table.remove(heads, i)
-        
-        local chunks = getChunksIntersecting(head,width)
-        for i,chunk in pairs(chunks) do
-          setmultimap.remove(headsByChunk, chunk, head)
-        end
-        dirty = true
-      end
-    end
-  end
-  return dirty
-end
-
-function isHeadOfOwner(block, owner)
-  return isPlayerHead(block) and block.nbt.Owner.Name == owner
-end
-
-function getBlock(pos)
-  spell.pos = pos
-  return spell.block
-end
-
-function isPlayerHead(block)
-  return block.name == "skull" and block.nbt.Owner and block.nbt.Owner.Name
-end
-
-
-function onRightClickBlockEvent(event, funcCanClaimPos)
-  if event.player.dimension ~= 0 then
-    return false -- claiming is only supported in the overworld
-  end
-  spell.pos = event.pos
-  spell:move(event.face)
-  local block = spell.block
-  if not isPlayerHead(block) then
-    return false -- not dirty
-  end
-  local head = spell.pos
-  if event.player.gamemode ~= "creative" and funcCanClaimPos(head) then
-    -- undo setting the head
-    destroy(head)
-    return false -- not dirty
-  end
-  
-  -- prevent overlapping areas
-  if isOverlapping(head) then
-    spell:execute('tellraw %s {"text":"This would overlap with a different claimed area","color":"dark_purple"}', event.player.name)
-    -- undo setting the head
-    destroy(head)
-    return false -- not dirty
-  end
-  
-  -- new head is accepted
-  local heads = spell.data.claims.heads
-  local headsByChunk = spell.data.claims.headsByChunk
-  local width = spell.data.claims.width
-  table.insert(heads, head)
-  local chunks = getChunksIntersecting(head,width)
-  for i,chunk in pairs(chunks) do
-    setmultimap.put(headsByChunk, chunk, head)
-  end
-  return true -- dirty
-end
-
-function isOverlapping(head)
-  local block = getBlock(head)
-  local owner = block.nbt.Owner.Name
-  
-  local ownerHeadsXZ = {}
-  local foreignHeadsXZ = {}
-  
-  local headsByChunk = spell.data.claims.headsByChunk
-  local width = spell.data.claims.width
-  local chunks = getChunksIntersecting(head,width)
-  for i,chunk in pairs(chunks) do
-    local nearbyHeads = headsByChunk[chunk]
-    if nearbyHeads then
-      for j,nearbyHead in pairs(nearbyHeads) do
-        if  nearbyHead.x + width*2 >= head.x
-        and head.x + width*2 >= nearbyHead.x
-        and nearbyHead.z + width*2 >= head.z
-        and head.z + width*2 >= nearbyHead.z
-        then
-          local xz = nearbyHead.x.."/"..nearbyHead.z
-          local nearbyBlock = getBlock(nearbyHead)
-          if isPlayerHead(nearbyBlock) then
-            if isHeadOfOwner(nearbyBlock, owner) then
-              ownerHeadsXZ[xz] = true
-            else
-              foreignHeadsXZ[xz] = true
-            end
-          end
-        end
-      end
-    end
-  end
-  if foreignHeadsXZ[head.x.."/"..head.z] then
-    return false -- placing a head ontop of another head is always allowed
-  end
-  for xz,_ in pairs(ownerHeadsXZ) do
-    foreignHeadsXZ[xz] = nil
-  end
-  return next(foreignHeadsXZ) ~= nil
-end
-
-function destroy(pos)
-  spell:execute("setblock "..pos.x.." "..pos.y.." "..pos.z.." air 0 destroy")
-end
-
-function getChunksIntersecting(pos, width)
-  local minChunkX = (pos.x - width) // 16
-  local maxChunkX = (pos.x + width + 1) // 16
-  local minChunkZ = (pos.z - width) // 16
-  local maxChunkZ = (pos.z + width + 1) // 16
+function pkg.getApplicableClaims(pos)
+  local claimsByChunk = pkg.getClaimsByChunk()
+  local chunk = pkg.getChunk(pos)
+  local claims = claimsByChunk[chunk] or {}
+  pkg.removeInvalidClaims(claims)
   local result = {}
-  for chunkX=minChunkX,maxChunkX,1 do
-    for chunkZ=minChunkZ,maxChunkZ,1 do
-      table.insert(result, chunkX..'/'..chunkZ)
+  for _, claim in pairs(claims) do
+    if claim:contains(pos) then
+      table.insert(result, claim)
     end
   end
   return result
+end
+
+function pkg.getChunk(pos)
+  pos = pos:floor()
+  local chunkX = pos.x // 16
+  local chunkZ = pos.z // 16
+  return chunkX..'/'..chunkZ
+end
+
+function pkg.removeInvalidClaims(claims)
+  local invalidClaims = {}
+  for _, claim in pairs(claims) do
+    if not claim:isValid() then
+      table.insert(invalidClaims, claim)
+    end
+  end
+  for _, claim in pairs(invalidClaims) do
+    pkg.removeClaim(claim)
+  end
 end
 
 return pkg

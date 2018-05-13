@@ -3,7 +3,7 @@
 -- require('claiming.cities').get():createCity(pos)
 local module = ...
 local datastore = require "claiming.datastore"
-require "claiming.singleton"
+local singleton = require "claiming.singleton"
 
 -- Constants:
 local CITIES_CMD = module..".command"
