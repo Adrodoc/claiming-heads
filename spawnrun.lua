@@ -12,7 +12,7 @@
 local module = ...
 local signalrocket = require "claiming.signalrocket"
 local cities = require("claiming.cities").get()
-require "claiming.singleton"
+singleton = require("claiming.singleton")
 
 local pkg = {}
 -- Forward declarations of local functions:
