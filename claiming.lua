@@ -2,15 +2,22 @@ local module = ...
 
 require 'claiming.ClaimedArea'
 require 'claiming.Spell'
+local datastore = require "claiming.datastore"
 local listmultimap = require "claiming.listmultimap"
 local singleton = require "claiming.singleton"
 
 local pkg = {}
 
-function pkg.start(width, frequency)
-  singleton(module)
+function pkg.start(storePos, width, frequency)
   width = width or 16
   frequency = frequency or 20
+  singleton(module)
+  spell.data.claiming = {
+    storePos = storePos,
+    claims = {},
+    claimsByChunk = {}
+  }
+  pkg.loadData()
   Events.on('BlockPlaceEvent', 'BlockBreakEvent'):call(function(event)
     if not pkg.mayBuild(event.player, event.pos) then
       event.canceled = true
@@ -75,29 +82,75 @@ function pkg.getOverlappingClaim(claim, claimPredicate)
   end
 end
 
-spell.data.claiming = {
-  claimsByChunk = {}
-}
+local claimingSpell
+function pkg.getClaimingSpell()
+  if claimingSpell == nil then
+    claimingSpell = Spells.find({name=module})[1]
+  end
+  return claimingSpell
+end
+
+local loadDataPending
+function pkg.loadData()
+  loadDataPending = true
+  local storePos = pkg.getStorePos()
+  local data = datastore.load(storePos) or {}
+  for _, serializedClaim in pairs(data) do
+    local claim = HeadClaim.deserialize(serializedClaim)
+    pkg.addClaim(claim)
+  end
+  loadDataPending = false
+end
+
+function pkg.saveData()
+  if loadDataPending then
+    return
+  end
+  local data = {}
+  local claims = pkg.getClaims()
+  for claim, _ in pairs(claims) do
+    local serializedClaim = claim:serialize()
+    table.insert(data, serializedClaim)
+  end
+  local storePos = pkg.getStorePos()
+  datastore.save(storePos, data)
+end
+
+function pkg.getStorePos()
+  local spell = pkg.getClaimingSpell()
+  return spell.data.claiming.storePos
+end
+
+function pkg.getClaims()
+  local spell = pkg.getClaimingSpell()
+  return spell.data.claiming.claims
+end
 
 function pkg.getClaimsByChunk()
-  local spell = Spells.find({name=module})[1]
+  local spell = pkg.getClaimingSpell()
   return spell.data.claiming.claimsByChunk
 end
 
 function pkg.addClaim(claim)
+  local claims = pkg.getClaims()
+  claims[claim] = true
   local claimsByChunk = pkg.getClaimsByChunk()
   local chunks = claim:getChunks()
   for _, chunk in pairs(chunks) do
     listmultimap.put(claimsByChunk, chunk, claim)
   end
+  pkg.saveData()
 end
 
 function pkg.removeClaim(claim)
+  local claims = pkg.getClaims()
+  claims[claim] = nil
   local claimsByChunk = pkg.getClaimsByChunk()
   local chunks = claim:getChunks()
   for _, chunk in pairs(chunks) do
     listmultimap.remove(claimsByChunk, chunk, claim)
   end
+  pkg.saveData()
 end
 
 function pkg.updatePlayer(player)
