@@ -8,9 +8,11 @@ local singleton = require "claiming.singleton"
 
 local pkg = {}
 
-function pkg.start(storePos, width, frequency)
-  width = width or 16
-  frequency = frequency or 20
+function pkg.start(storePos, options, funcCanClaimPos)
+  options = options or {}
+  local width = options.width or 16
+  local frequency = options.frequency or 20
+
   singleton(module)
   spell.data.claiming = {
     storePos = storePos,
@@ -29,6 +31,11 @@ function pkg.start(storePos, width, frequency)
     local ownerId = HeadClaim.getHeadOwnerId(block)
     if ownerId then
       local pos = event.pos
+      if not funcCanClaimPos(pos) then
+        event.canceled = true
+        spell:execute('tellraw '..event.player.name..' {"text":"You are not allowed to claim here","color":"gold"}')
+        return
+      end
       local claim = HeadClaim.new(pos, width, ownerId)
       local foreignClaim = pkg.getOverlappingForeignClaim(claim, event.player)
       if foreignClaim then
