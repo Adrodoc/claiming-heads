@@ -7,6 +7,7 @@ local listmultimap = require "claiming.listmultimap"
 local singleton = require "claiming.singleton"
 
 local pkg = {}
+local log
 
 function pkg.start(storePos, options, funcCanClaimPos)
   options = options or {}
@@ -220,6 +221,15 @@ function pkg.removeInvalidClaims(claims)
   for _, claim in pairs(invalidClaims) do
     pkg.removeClaim(claim)
   end
+end
+
+-- Logs the given message into the chat
+function log(message, ...)
+  local n = select('#', ...)
+  if n>0 then
+    message = string.format(message, ...)
+  end
+  spell:execute("say %s", message)
 end
 
 return pkg
