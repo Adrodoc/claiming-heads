@@ -13,7 +13,8 @@ function pkg.start(storePos, options, funcCanClaimPos)
   options = options or {}
   local width = options.width or 16
   local frequency = options.frequency or 20
-
+  local creativeBuildAllowed = options.creativeBuildAllowed or false
+  
   singleton(module)
   spell.data.claiming = {
     storePos = storePos,
@@ -21,13 +22,21 @@ function pkg.start(storePos, options, funcCanClaimPos)
     claimsByChunk = {}
   }
   pkg.loadData()
+  pkg.setCreativeBuildAllowed(creativeBuildAllowed)
+  
   Events.on('BlockPlaceEvent', 'BlockBreakEvent'):call(function(event)
+    if event.player.gamemode == "creative" and pkg.isCreativeBuildAllowed() then
+      return
+    end
     if not pkg.mayBuild(event.player, event.pos) then
       event.canceled = true
       spell:execute('tellraw '..event.player.name..' {"text":"This area is claimed by someone else","color":"gold"}')
     end
   end)
   Events.on('BlockPlaceEvent'):call(function(event)
+    if event.player.gamemode == "creative" and pkg.isCreativeBuildAllowed() then
+      return
+    end
     local block = spell:getBlock(event.pos) -- Workaround for https://github.com/wizards-of-lua/wizards-of-lua/issues/188
     local ownerId = HeadClaim.getHeadOwnerId(block)
     if ownerId then
@@ -139,6 +148,16 @@ function pkg.getClaimsByChunk()
   return spell.data.claiming.claimsByChunk
 end
 
+function pkg.isCreativeBuildAllowed()
+  local spell = pkg.getClaimingSpell()
+  return spell.data.claiming.creativeBuildAllowed
+end
+
+function pkg.setCreativeBuildAllowed(value)
+  local spell = pkg.getClaimingSpell()
+  spell.data.claiming.creativeBuildAllowed = value
+end
+
 function pkg.addClaim(claim)
   local claims = pkg.getClaims()
   claims[claim] = true
@@ -162,6 +181,9 @@ function pkg.removeClaim(claim)
 end
 
 function pkg.updatePlayer(player)
+  if player.gamemode == "creative" then
+    return
+  end
   if player.dimension ~= 0 then
     if player.gamemode == 'adventure' then
       player.gamemode = 'survival'

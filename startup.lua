@@ -28,8 +28,9 @@ end
 
 local CITIES_DATA_STORE_POS = CITIES_DATA_STORE_POS or Vec3(751, 75, 355)
 local CLAIMING_DATA_STORE_POS = CLAIMING_DATA_STORE_POS or Vec3(751, 77, 355)
-local CLAIMING_WIDTH = 21
-local CLAIMING_FREQUENCY = 20
+local CLAIMING_WIDTH = CLAIMING_WIDTH or 21
+local CLAIMING_FREQUENCY = CLAIMING_FREQUENCY or 20
+local CLAIMING_CREATVE_BUILD_ALLOWED = CLAIMING_CREATVE_BUILD_ALLOWED or true
 
 -- The Cities
 spell:execute([[
@@ -44,10 +45,10 @@ spell:execute([[
   end
   require('claiming.claiming').start(
     %s,
-    {width=%s,frequency=%s},
+    {width=%s,frequency=%s, creativeBuildAllowed=%s},
     funcCanClaimPos
   )
-]], toLua(CLAIMING_DATA_STORE_POS), CLAIMING_WIDTH, CLAIMING_FREQUENCY)
+]], toLua(CLAIMING_DATA_STORE_POS), CLAIMING_WIDTH, CLAIMING_FREQUENCY, CLAIMING_CREATVE_BUILD_ALLOWED)
 
 -- The Spawn Run
 spell:execute("/lua require('claiming.spawnrun').start()")
