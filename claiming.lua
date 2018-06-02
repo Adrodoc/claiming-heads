@@ -34,21 +34,19 @@ function pkg.start(storePos, options, funcCanClaimPos)
     end
   end)
   Events.on('BlockPlaceEvent'):call(function(event)
-    if event.player.gamemode == "creative" and pkg.isCreativeBuildAllowed() then
-      return
-    end
+    local checkClaim = not (event.player.gamemode == "creative" and pkg.isCreativeBuildAllowed())
     local block = spell:getBlock(event.pos) -- Workaround for https://github.com/wizards-of-lua/wizards-of-lua/issues/188
     local ownerId = HeadClaim.getHeadOwnerId(block)
     if ownerId then
       local pos = event.pos
-      if not funcCanClaimPos(pos) then
+      if checkClaim and not funcCanClaimPos(pos) then
         event.canceled = true
         spell:execute('tellraw '..event.player.name..' {"text":"You are not allowed to claim here","color":"gold"}')
         return
       end
       local claim = HeadClaim.new(pos, width, ownerId)
       local foreignClaim = pkg.getOverlappingForeignClaim(claim, event.player)
-      if foreignClaim then
+      if checkClaim and foreignClaim then
         event.canceled = true
         spell:execute('tellraw '..event.player.name..' {"text":"This claim would overlap with the foreign '..tostring(foreignClaim)..'","color":"gold"}')
       else
