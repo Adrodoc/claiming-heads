@@ -136,30 +136,30 @@ function Cities:resizeCity( aPos, size)
   self:saveData()
 end
 
--- Makes the city at the given position to the world's capitol.
-function Cities:setCapitol( aPos)
+-- Makes the city at the given position to the world's capital.
+function Cities:setCapital( aPos)
   aPos = aPos:floor()
-  -- log("Should make city at %s to capitol", aPos)
+  -- log("Should make city at %s to capital", aPos)
   local data = self:getData()
   local key = aPos:tostring()
   if not data[key] then
-    log("Can't make city to capitol! There is no city at %s.", aPos)
+    log("Can't make city to capital! There is no city at %s.", aPos)
     return
   end
-  local newCapitol = data[key]
-  newCapitol.isCapitol = true
+  local newCapital = data[key]
+  newCapital.isCapital = true
   for _,city in pairs(data) do
-    if city ~= newCapitol then
-      city.isCapitol = false
+    if city ~= newCapital then
+      city.isCapital = false
     end
   end
   self:setData(data)
   self:saveData()
 end
 
-function Cities:isInsideCapitolCenter( pos)
-  local capitol = self:getCapitol()
-  return capitol and isInsideCenter( capitol, pos)
+function Cities:isInsideCapitalCenter( pos)
+  local capital = self:getCapital()
+  return capital and isInsideCenter( capital, pos)
 end
 
 function Cities:isInsideCityCenter( pos)
@@ -171,27 +171,27 @@ function Cities:isInsideCityCenter( pos)
   return false
 end
 
-function Cities:getCapitolSize()
+function Cities:getCapitalSize()
   for _,city in pairs(self:getData()) do
-    if city.isCapitol then
+    if city.isCapital then
       return city.ringWidth * #rings
     end
   end
   return nil
 end
 
-function Cities:getCapitolCenter()
-  local capitol = self:getCapitol()
-  if capitol then
-    return capitol.center
+function Cities:getCapitalCenter()
+  local capital = self:getCapital()
+  if capital then
+    return capital.center
   else
     return nil
   end
 end
 
-function Cities:getCapitol()
+function Cities:getCapital()
   for _,city in pairs(self:getData()) do
-    if city.isCapitol then
+    if city.isCapital then
       return city
     end
   end

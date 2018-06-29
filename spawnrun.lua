@@ -41,7 +41,7 @@ function pkg.start()
         local player = event.entity
         if isZonePlayer(player) then
           pkg.cancelPlayer(player)
-          local center = cities:getCapitolCenter()
+          local center = cities:getCapitalCenter()
           setSpawnPoint(player, center)
           --teleport(player, center)
         end
