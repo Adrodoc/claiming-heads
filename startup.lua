@@ -10,14 +10,14 @@ Dependencies:   wol-1.12.2-2.0.2
 
 
 You can use this startup script to activate the Claiming spell pack on your server.
-If you want it to run with the defalt settings, just execute it from your server's
+If you want it to run with the default settings, just execute it from your server's
 startup script like this:
 
   require('claiming.startup').startup()
 
 The Claiming Spell Pack stores map-specific data into command blocks at 
 certain locations. 
-You can define where these command blocks are located by overriding the respectiv
+You can define where these command blocks are located by overriding the respective
 default settings.  
 For example, to set CITIES_DATA_STORE_POS to Vec3(1,2,3), you need to call the startup
 function like this:
