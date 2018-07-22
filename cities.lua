@@ -75,9 +75,11 @@ function Cities:loadData()
   self:setData(data)
 end
 
--- Creates a new city at the given pos
-function Cities:createCity( aPos)
+-- Creates a new city at the given position with the given ringWidth
+-- Throws an error if there is already a city at the given position.
+function Cities:createCity( aPos, ringWidth)
   aPos = aPos:floor()
+  ringWidth = ringWidth or 400
   -- log("Should create new city at %s", aPos)
   local data = self:getData()
   local key = aPos:tostring()
@@ -87,14 +89,29 @@ function Cities:createCity( aPos)
   end
   local city = {
     center = aPos,
-    ringWidth = 10
+    ringWidth = ringWidth
   }
   data[key] = city
   self:setData(data)
   self:saveData()
 end
 
--- Deletes the city at the given pos
+-- Creates a new capital at the given position with the given ringWidth.
+-- Throws an error if there is already a capital in this world.
+function Cities:createCapital( aPos, ringWidth)
+  -- log("Should create new capital at %s", aPos)
+  -- check if there is already a capital somewhere
+  local data = self:getData()
+  for _,city in pairs(data) do
+    if city.isCapital then
+      error("Can't create new capital! There is already a capital at %s.", city.center)
+    end
+  end
+  self:createCity(aPos, ringWith)
+  self:setCapital(aPos)
+end
+
+-- Deletes the city at the given position
 function Cities:deleteCity( aPos)
   aPos = aPos:floor()
   -- log("Should delete city at %s", aPos)
@@ -109,7 +126,7 @@ function Cities:deleteCity( aPos)
   self:saveData()
 end
 
--- Returns true if there is a city at the given pos
+-- Returns true if there is a city at the given position
 function Cities:isCity( aPos)
   aPos = aPos:floor()
   local data = self:getData()
@@ -121,10 +138,10 @@ function Cities:isCity( aPos)
   end
 end
 
--- Resizes the ring width of the city at the given pos to the given size
-function Cities:resizeCity( aPos, size)
+-- Resizes the ring width of the city at the given position to the given ringWidth
+function Cities:resizeCity( aPos, ringWidth)
   aPos = aPos:floor()
-  -- log("Should resize city rings at %s to %s", aPos, size)
+  -- log("Should resize city rings at %s to %s", aPos, ringWidth)
   local data = self:getData()
   local key = aPos:tostring()
   if not data[key] then
@@ -132,7 +149,7 @@ function Cities:resizeCity( aPos, size)
     return
   end
   local city = data[key]
-  city.ringWidth = size
+  city.ringWidth = ringWidth
   self:setData(data)
   self:saveData()
 end
