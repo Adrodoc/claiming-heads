@@ -1,6 +1,7 @@
 -- claiming/cities.lua
 
--- require('claiming.cities').get():createCity(pos)
+-- /lua require('claiming.cities').get():createCity(pos)
+-- /lua local v=require('claiming.cities').get():isInWilderness(spell.pos); print(v)
 local module = ...
 local datastore = require "claiming.datastore"
 local singleton = require "claiming.singleton"
@@ -198,13 +199,23 @@ function Cities:getCapital()
   return nil
 end
 
+function Cities:isInWilderness( pos)
+  local index = findSmallestCityRingIndex( pos, self)
+  return (index == #rings)
+end
 
 -- package declaration
 
 local pkg = {}
 
 function pkg.get()
-  local result = Spells.find({name=module})[1]
+  local result
+  local count = 0
+  while not result and count<20 do
+    sleep(1)
+    count = count + 1
+    result = Spells.find({name=module})[1]
+  end
   if not result then
     error("Spell %s not found! You need to cast this spell before looking for it.", module)
   end
@@ -244,7 +255,7 @@ function updatePlayer( player)
   if player.dimension ~= 0 then
     return -- cities are only supported in the overworld
   end
-  local ringIndex = findSmallestCityRingIndex( player)
+  local ringIndex = findSmallestCityRingIndex( player.pos, spell.data.cities)
   if isForbidden(player.mainhand, ringIndex) or isForbidden(player.offhand, ringIndex) then
     --log(player.name, ringIndex, "forbidden item!")
     spell:execute(cmdFatigue, player.name)
@@ -265,13 +276,11 @@ function isForbidden(item, ringIndex)
   return false
 end
 
--- Compares the indices of all rings the given player is inside and returns
--- the smallest one
-function findSmallestCityRingIndex( player)
+-- Finds the smallest index of all rings that the given pos is inside of.
+function findSmallestCityRingIndex( pos, cities)
   local result = #rings 
-  local cities = spell.data.cities
   for _,city in pairs(cities:getData()) do
-    local offset = city.center - player.pos
+    local offset = city.center - pos
     offset.y = 0
     local dist = offset:magnitude()
     local ringIndex = math.min(#rings, math.ceil( dist / city.ringWidth))

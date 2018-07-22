@@ -77,7 +77,7 @@ end
 
 function handlePlayer(player)
   if isZonePlayer(player) then
-    if cities:isInsideCapitolCenter(player.pos) then
+    if cities:isInsideCapitalCenter(player.pos) then
       pkg.finishPlayer(player)
     end
   end
@@ -85,11 +85,11 @@ end
 
 function pkg.giveStartItem()
   local p = Entities.find("@p")[1]
-  
-  local center = cities:getCapitolCenter()
-  local radius = cities:getCapitolSize()
+  --log("cities=%s", cities)
+  local center = cities:getCapitalCenter()
+  local radius = cities:getCapitalSize()
   if not center or not radius then
-    log("Can't give start item since there is no capitol")
+    log("Can't give start item since there is no capital")
   end
   
   local zonePos = randomZonePos(center, radius):floor()
