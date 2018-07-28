@@ -9,6 +9,9 @@ local singleton = require "claiming.singleton"
 local pkg = {}
 local log
 
+-- Starts the claiming spell with the given position for storing all claim data,
+-- the given options (with the attributes width, frequency, and creativeBuildAllowed),
+-- and the given predicate function that decides if a specified position is allowed to be claimed.
 function pkg.start(storePos, options, funcCanClaimPos)
   options = options or {}
   local width = options.width or 16
