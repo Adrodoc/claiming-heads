@@ -41,7 +41,7 @@ These are the steps to install and run the Claiming Heads on your Minecraft Serv
      
 3. **Install Claiming Heads Spell Pack**
 
-    Download the ZIP file containing the latest Version of 
+    Download the JAR file containing the latest Version of 
     [The Claiming Heads Spell Pack](https://minecraft.curseforge.com/projects/claiming-heads-spell-pack/files) and place it
     into the "mods" directory of your Minecraft server.
     
