@@ -1,4 +1,4 @@
-# claiming-heads
+# Claiming Heads Spell Pack
 The Claiming Heads Spell Pack is a [Wizards of Lua](http://www.wizards-of-lua.net) spell pack that adds claiming support to Minecraft worlds.
 
 The intention of this spell pack is to support server owners who want to host "vanilla" survival servers
