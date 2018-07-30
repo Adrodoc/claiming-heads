@@ -17,12 +17,12 @@ Just execute the following Minecraft command:
 ```
 /give PLAYER skull 1 3 {SkullOwner:"PLAYER"}
 ```
-Please replace *PLAYER* with the player's name.
+Please replace both occurrences of *PLAYER* with the actual player's name.
 #### By Spell
 ```lua
 /lua name="PLAYER"; spell:execute([[/give %s skull 1 3 {SkullOwner:"%s"}]], name, name)
 ```
-Please replace *PLAYER* with the player's name.
+Please replace *PLAYER* with the actual player's name.
 
 ## How to Install?
 This spell pack is dependent on [Minecraft Forge](http://files.minecraftforge.net/maven/net/minecraftforge/forge/index_1.12.2.html) 
