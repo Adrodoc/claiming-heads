@@ -24,6 +24,11 @@ Please replace both occurrences of *PLAYER* with the actual player's name.
 ```
 Please replace *PLAYER* with the actual player's name.
 
+For example, to create a "claiming head dispenser" just insert the following line into a command block and attach a button to it.
+```lua
+/lua p=Entities.find("@p")[1]; name=p.name; spell:execute([[/give %s skull 1 3 {SkullOwner:"%s"}]], name, name)
+```
+
 ## How to Install?
 This spell pack is dependent on [Minecraft Forge](http://files.minecraftforge.net/maven/net/minecraftforge/forge/index_1.12.2.html) 
 and the [Wizards of Lua Modification](https://minecraft.curseforge.com/projects/wizards-of-lua/files).
