@@ -12,6 +12,9 @@ An area can be claimed by placing a "claiming head" in the middle of it. Multi-o
 A player can claim any area simply by placing a "claiming head" (this is a player skull) into the center of that area.
 By removing this head the area becomes unprotected again.
 
+### How to Claim an Area for Multiple Owners?
+This is really easy. Just give one player both heads and let him place them. But make sure that he places his own head first.
+
 ### How to Get a Claiming Head?
 #### By Command
 Just execute the following Minecraft command:
