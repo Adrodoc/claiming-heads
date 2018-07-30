@@ -13,7 +13,7 @@ A player can claim any area simply by placing a "claiming head" (this is a playe
 By removing this head the area becomes unprotected again.
 
 ### How to Claim an Area for Multiple Owners?
-This is really easy. Just take both heads into your inventory. Then claim an area with your own head first, and then place the other head on top of yours.
+This is really easy. Just take both heads into your inventory, then claim an area with your own head first, and finally place the other head on top of yours.
 
 ### How to Get a Claiming Head?
 #### By Command
