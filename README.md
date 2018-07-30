@@ -10,6 +10,7 @@ An area can be claimed by placing a "claiming head" in the middle of it. Multi-o
 ## Playing Instructions
 ### How to Claim an Area?
 A player can claim any area simply by placing a "claiming head" (this is a player skull) into the center of that area.
+By removing this head the area becomes unprotected again.
 
 ### How to Get a Claiming Head?
 #### By Command
