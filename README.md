@@ -8,8 +8,8 @@ any unauthorized player from "survial" to "adventure" when he or she enters a pr
 An area can be claimed by placing a "claiming head" in the middle of it. Multi-owner claims are supported. Claiming heads can be created by command.
 
 ## Playing Instructions
-### How to Claim a Private Area?
-Any player can claim an area simply by placing a "claiming head" (this is a player skull) into the world.
+### How to Claim an Area?
+A player can claim any area simply by placing a "claiming head" (this is a player skull) into the center of that area.
 
 ### How to Get a Claiming Head?
 #### By Command
