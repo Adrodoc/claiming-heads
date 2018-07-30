@@ -23,7 +23,7 @@ Please replace both occurrences of *PLAYER* with the actual player's name.
 /lua name="PLAYER"; spell:execute([[/give %s skull 1 3 {SkullOwner:"%s"}]], name, name)
 ```
 Please replace *PLAYER* with the actual player's name.
-
+#### By Command Block
 For example, to create a "claiming head dispenser" just insert the following line into a command block and attach a button to it.
 ```lua
 /lua p=Entities.find("@p")[1]; spell:execute([[/give %s skull 1 3 {SkullOwner:"%s"}]], p.name, p.name)
