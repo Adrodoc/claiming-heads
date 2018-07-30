@@ -58,6 +58,8 @@ These are the steps to install and run the Claiming Heads on your Minecraft Serv
     * **datastore**: (Vec3) This is the position of the command block that is used as a storage device. The Claiming Heas spell will store the claiming locations, sizes, and owners there.
     * **claimingWidth**: (Numeric) This defines the size of newly claimed areas. It's the distance from the center to the norther, southern, western, and eastern border of the area. Please note that this only affects new claims. 
     * **restictCreativePlayer**: (boolean) This defines whether creative players are prevented from building in claimed areas. Valid values are *true* and *false*.
+    * **claimingFrequency**: (numeric) This defines the number of game ticks that the Claiming Heads spell waits between two consecutive  checks of the all player positions.
+    * **funcCanClaimPos**: (function) This defines a predicate function on a given position (Vec3) that should return a boolean value that defines whether anybody can claim that position in principle.
     
     
 5. **Start the Server**
