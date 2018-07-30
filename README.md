@@ -70,5 +70,5 @@ These are the steps to install and run the Claiming Heads on your Minecraft Serv
     * **funcCanClaimPos**: (function) This defines a predicate function on a given position (Vec3) that should return a boolean value that defines whether anybody can claim that position in principle.
     
     
-5. **Start the Server**
+5. **Restart the Server**
 
