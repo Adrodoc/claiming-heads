@@ -4,7 +4,7 @@ The Claiming Heads Spell Pack is a [Wizards of Lua](http://www.wizards-of-lua.ne
 The intention of this spell pack is to support server owners who want to host "mostly vanilla" survival servers
 but also want to restrict griefing. This spell pack provides a spell that protects certain areas - called claims -
 so that only the players who own this area are allowed to build there. This is done by changing the game mode of
-any unauthorized player from "survial" to "adventure" (and by canceling every block place and break event) when he or she enters a protected area.
+any unauthorized player from "survial" to "adventure" (and by canceling every block place and break event) when he or she enters a protected area owned by another player.
 An area can be claimed by placing a "claiming head" in the middle of it. Multi-owner claims are supported. Claiming heads can be created by command.
 
 ## Playing Instructions
@@ -13,7 +13,7 @@ A player can claim any area simply by placing a "claiming head" (this is a playe
 By removing this head the area becomes unprotected again.
 
 ### How to Claim an Area for Multiple Owners?
-This is really easy. Just take both heads into your inventory, then claim an area with your own head first, and finally place the other head on top of yours.
+This is really easy. Just take both heads into your inventory, then claim an area with your own head first, and finally place the other head somewhere above or below of yours.
 
 ### How to Get a Claiming Head?
 #### By Command
