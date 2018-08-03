@@ -1,10 +1,10 @@
 # Claiming Heads Spell Pack
-The Claiming Heads Spell Pack is a [Wizards of Lua](http://www.wizards-of-lua.net) Add-on that adds claiming support to Minecraft worlds.
+The Claiming Heads Spell Pack is a [Wizards of Lua](http://www.wizards-of-lua.net) add-on that adds claiming support to Minecraft worlds.
 
 The intention of this spell pack is to support server owners who want to host "mostly vanilla" survival servers
 but also want to restrict griefing. This spell pack provides a spell that protects certain areas - called claims -
 so that only the players who own this area are allowed to build there. This is done by changing the game mode of
-any unauthorized player from "survial" to "adventure" (and by canceling ever block place and break event) when he or she enters a protected area.
+any unauthorized player from "survial" to "adventure" (and by canceling every block place and break event) when he or she enters a protected area.
 An area can be claimed by placing a "claiming head" in the middle of it. Multi-owner claims are supported. Claiming heads can be created by command.
 
 ## Playing Instructions
@@ -63,11 +63,11 @@ These are the steps to install and run the Claiming Heads on your Minecraft Serv
     }) ]])
     ```
     The following options are supported:
-    * **datastore**: (Vec3) This is the position of the command block that is used as a storage device. The Claiming Heas spell will store the claiming locations, sizes, and owners there.
-    * **claimingWidth**: (Numeric) This defines the size of newly claimed areas. It's the distance from the center to the norther, southern, western, and eastern border of the area. Please note that this only affects new claims. 
+    * **datastore**: (Vec3) This is the position of the command block that is used as a storage device. The Claiming Heads spell will store the claiming locations, sizes, and owners there.
+    * **claimingWidth**: (Numeric) This defines the size of newly claimed areas. It's the distance measured in meters from the center to the northern, southern, western, and eastern border of the area. Please note that this only affects new claims. 
     * **restictCreativePlayer**: (boolean) This defines whether creative players are prevented from building in claimed areas. Valid values are *true* and *false*.
-    * **claimingFrequency**: (numeric) This defines the number of game ticks that the Claiming Heads spell waits between two consecutive  checks of the all player positions.
-    * **funcCanClaimPos**: (function) This defines a predicate function on a given position (Vec3) that should return a boolean value that defines whether anybody can claim that position in principle.
+    * **claimingFrequency**: (numeric) This defines the number of game ticks that the Claiming Heads spell waits between two consecutive  checks of the player positions.
+    * **funcCanClaimPos**: (function) This defines a predicate function on a given position (Vec3) that should return a boolean value that decides whether anybody can claim that position in principle.
     
     
 5. **Restart the Server**
