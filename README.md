@@ -26,11 +26,11 @@ These are the steps to install and run the Claiming Heads on your Minecraft Serv
 
     Download the JAR file containing the latest Version of 
     [The Claiming Heads Spell Pack](https://minecraft.curseforge.com/projects/claiming-heads-spell-pack/files) and place it
-    into the "mods" directory of your Minecraft server.
+    into the `mods` directory of your Minecraft server.
     
 4. **Activate the Claiming Heads Spell on Server Startup**
 
-    Create a file called "startup.lua" and place it into the "config/wizards-of-lua/libs/shared" directory of your Minecraft server.
+    Create a file called `startup.lua` and place it into the `config/wizards-of-lua/libs/shared` directory of your Minecraft server.
     Insert the following lines into it:
     ```lua
     spell:execute([[ /lua require("claiming-heads.startup").start({
@@ -76,7 +76,7 @@ For example, to create a "claiming head dispenser" just insert the following lin
 ### How to Show Claimed Areas?
 Below is a handy function that shows the bordes of the closest claimed area you are inside of.
 
-To add this function to your server, please create a file called "shared-profile.lua" and place it into the "config/wizards-of-lua/libs/shared" directory of your Minecraft server. Then insert the following lines into it:
+To add this function to your server, please create a file called `shared-profile.lua` and place it into the `config/wizards-of-lua/libs/shared` directory of your Minecraft server. Then insert the following lines into it:
 
 ```lua
 function showClaims()
