@@ -77,6 +77,19 @@ For example, to create a "claiming head dispenser" just insert the following lin
 
 ## Advanced Configuration
 
+### How to Restrict Claims to Villages?
+If you want to restrict new claims to be allowed only inside "vital" villages (which are villages with living villagers), you
+can provide a proper function for the "funcCanClaimPos" option.
+
+To do this, edit the file called `startup.lua` (which should be inside the `config/wizards-of-lua/libs/shared` directory of your Minecraft server) and replace the startup spell with the following lines:
+    
+```lua
+spell:execute([[ /lua require("claiming-heads.startup").start({
+    datastore=Vec3(32,88,26), claimingWidth=21, restictCreativePlayer=false,
+    funcCanClaimPos=function(pos) return spell.world.dimension == 0 and spell.world:getNearestVillage(pos,10) end
+}) ]])
+```
+
 ### How to Show Claimed Areas?
 Below is a handy function that shows the borders of the closest claimed area you are inside of.
 
@@ -104,3 +117,4 @@ To cast a spell with this function, just open the chat line (by typing 'T') and 
 ```lua
 /lua showClaims()
 ```
+
