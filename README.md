@@ -76,7 +76,7 @@ For example, to create a "claiming head dispenser" just insert the following lin
 ## Advanced Configuration
 
 ### How to Show Claimed Areas?
-Below is a handy function that shows the bordes of the closest claimed area you are inside of.
+Below is a handy function that shows the borders of the closest claimed area you are inside of.
 
 To add this function to your server, please create a file called `shared-profile.lua` and place it into the `config/wizards-of-lua/libs/shared` directory of your Minecraft server. Then insert the following lines into it:
 
