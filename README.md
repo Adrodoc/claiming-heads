@@ -98,7 +98,7 @@ function showClaims()
 end
 ```
 
-To cast a spell with this function, open the chat line (by typing 'T') and send the following command:
+To cast a spell with this function, just open the chat line (by typing 'T') and send the following command:
 ```lua
 /lua showClaims()
 ```
