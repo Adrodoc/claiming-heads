@@ -20,7 +20,7 @@ These are the steps to install and run the Claiming Heads on your Minecraft Serv
 
      Download the JAR file containing the latest Version of 
      [Wizards of Lua Modification](https://minecraft.curseforge.com/projects/wizards-of-lua/files) and place it
-     into the "mods" directory of your Minecraft server.
+     into the `mods` directory of your Minecraft server.
      
 3. **Install Claiming Heads Spell Pack**
 
