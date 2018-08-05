@@ -85,7 +85,7 @@ To do this, edit the file called `startup.lua` (which should be inside the `conf
     
 ```lua
 spell:execute([[ /lua require("claiming-heads.startup").start({
-    datastore=Vec3(32,88,26), claimingWidth=21, restictCreativePlayer=false,
+    datastore=Vec3(0,0,0), claimingWidth=21, restictCreativePlayer=false,
     funcCanClaimPos=function(pos) 
       return spell.world:getNearestVillage(pos,10) ~= nil
     end
