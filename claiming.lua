@@ -30,6 +30,10 @@ function pkg.start(storePos, options, funcCanClaimPos)
   pkg.setCreativeBuildAllowed(creativeBuildAllowed)
   
   Events.on('BlockPlaceEvent', 'BlockBreakEvent'):call(function(event)
+    if event.player.dimension ~= 0 then
+      -- claiming is only supported in the overworld
+      return
+    end
     if event.player.gamemode == "creative" and pkg.isCreativeBuildAllowed() then
       return
     end
@@ -39,6 +43,10 @@ function pkg.start(storePos, options, funcCanClaimPos)
     end
   end)
   Events.on('BlockPlaceEvent'):call(function(event)
+    if event.player.dimension ~= 0 then
+      -- claiming is only supported in the overworld
+      return
+    end
     local checkClaim = not (event.player.gamemode == "creative" and pkg.isCreativeBuildAllowed())
     local block = spell:getBlock(event.pos) -- Workaround for https://github.com/wizards-of-lua/wizards-of-lua/issues/188
     local ownerId = HeadClaim.getHeadOwnerId(block)
