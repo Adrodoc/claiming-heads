@@ -87,7 +87,6 @@ function showClaims()
   local closest = nil
   for _,claim in pairs(claims) do
     local dist = (claim.pos - player.pos):sqrMagnitude()
-    print(str(claim), dist)
     if not closest or dist < closest.dist then
       closest = { claim=claim, dist=dist}
     end
