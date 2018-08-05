@@ -73,6 +73,8 @@ For example, to create a "claiming head dispenser" just insert the following lin
 /lua p=Entities.find("@p")[1]; spell:execute([[/give %s skull 1 3 {SkullOwner:"%s"}]], p.name, p.name)
 ```
 
+## Advanced Configuration
+
 ### How to Show Claimed Areas?
 Below is a handy function that shows the bordes of the closest claimed area you are inside of.
 
@@ -101,5 +103,3 @@ To cast a spell with this function, open the chat line (by typing 'T') and send 
 ```lua
 /lua showClaims()
 ```
-
-
