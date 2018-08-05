@@ -7,31 +7,6 @@ so that only the players who own this area are allowed to build there. This is d
 any unauthorized player from "survial" to "adventure" (and by canceling every block place and break event) when he or she enters a protected area owned by another player.
 An area can be claimed by placing a "claiming head" in the middle of it. Multi-owner claims are supported. Claiming heads can be created by command.
 
-## Playing Instructions
-### How to Claim an Area?
-A player can claim any area simply by placing a "claiming head" (this is a player skull) into the center of that area.
-By removing this head the area becomes unprotected again.
-
-### How to Claim an Area for Multiple Owners?
-This is really easy. Just take both heads into your inventory, then claim an area with your own head first, and finally place the other head somewhere above or below of yours.
-
-### How to Get a Claiming Head?
-#### By Command
-Just execute the following Minecraft command:
-```
-/give PLAYER skull 1 3 {SkullOwner:"PLAYER"}
-```
-Please replace both occurrences of *PLAYER* with the actual player's name.
-#### By Spell
-```lua
-/lua name=spell.owner.name; spell:execute([[/give %s skull 1 3 {SkullOwner:"%s"}]], name, name)
-```
-#### By Command Block
-For example, to create a "claiming head dispenser" just insert the following line into a command block and attach a button to it.
-```lua
-/lua p=Entities.find("@p")[1]; spell:execute([[/give %s skull 1 3 {SkullOwner:"%s"}]], p.name, p.name)
-```
-
 ## How to Install?
 This spell pack is dependent on [Minecraft Forge](http://files.minecraftforge.net/maven/net/minecraftforge/forge/index_1.12.2.html) 
 and the [Wizards of Lua Modification](https://minecraft.curseforge.com/projects/wizards-of-lua/files).
@@ -71,4 +46,60 @@ These are the steps to install and run the Claiming Heads on your Minecraft Serv
     
     
 5. **Restart the Server**
+
+
+## Playing Instructions
+### How to Claim an Area?
+A player can claim any area simply by placing a "claiming head" (this is a player skull) into the center of that area.
+By removing this head the area becomes unprotected again.
+
+### How to Claim an Area for Multiple Owners?
+This is really easy. Just take both heads into your inventory, then claim an area with your own head first, and finally place the other head somewhere above or below of yours.
+
+### How to Get a Claiming Head?
+#### By Command
+Just execute the following Minecraft command:
+```
+/give PLAYER skull 1 3 {SkullOwner:"PLAYER"}
+```
+Please replace both occurrences of *PLAYER* with the actual player's name.
+#### By Spell
+```lua
+/lua name=spell.owner.name; spell:execute([[/give %s skull 1 3 {SkullOwner:"%s"}]], name, name)
+```
+#### By Command Block
+For example, to create a "claiming head dispenser" just insert the following line into a command block and attach a button to it.
+```lua
+/lua p=Entities.find("@p")[1]; spell:execute([[/give %s skull 1 3 {SkullOwner:"%s"}]], p.name, p.name)
+```
+
+### How to Show Claimed Areas?
+Below is a handy function that shows the bordes of the closest claimed area you are inside of.
+
+To add this function to your server, please create a file called "shared-profile.lua" and place it into the "config/wizards-of-lua/libs/shared" directory of your Minecraft server. Then insert the following lines into it:
+
+```lua
+function showClaims()
+  local player = spell.owner
+  local claims = require('claiming-heads.claiming').getApplicableClaims(player.pos)
+  local closest = nil
+  for _,claim in pairs(claims) do
+    local dist = (claim.pos - player.pos):sqrMagnitude()
+    print(str(claim), dist)
+    if not closest or dist < closest.dist then
+      closest = { claim=claim, dist=dist}
+    end
+  end
+  if closest then
+    local visualizer = require('claiming-heads.claimvisualizer')
+    visualizer.showBorders(player.name, closest.claim.pos, closest.claim.width)
+  end
+end
+```
+
+To cast a spell with this function, open the chat line (by typing 'T') and send the following command:
+```lua
+/lua showClaims()
+```
+
 
