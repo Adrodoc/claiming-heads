@@ -7,7 +7,7 @@ so that only the players who own this area are allowed to build there. This is d
 any unauthorized player from "survial" to "adventure" (and by canceling every block place and break event) when he or she enters a protected area owned by another player.
 An area can be claimed by placing a "claiming head" in the middle of it. Multi-owner claims are supported. Claiming heads can be created by command.
 
-You can give the Claiming Heads mod a try at out alpha server: ```mc.wizards-of-lua.net:30200```
+You can give the Claiming Heads mod a try at our alpha server: ```mc.wizards-of-lua.net:30200```
 
 ## How to Install?
 This spell pack is dependent on [Minecraft Forge](http://files.minecraftforge.net/maven/net/minecraftforge/forge/index_1.12.2.html) 
