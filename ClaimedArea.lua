@@ -35,7 +35,11 @@ function ClaimedSquare.new(pos, width, ownerId)
 end
 
 function ClaimedSquare:mayBuild(player)
-  return self.ownerId == player.uuid
+  if type(player)=="player" then
+    return self.ownerId == player.uuid
+  elseif type(player)=="string" then
+    return self.ownerId == player
+  end
 end
 
 function ClaimedSquare:getChunks()
@@ -109,7 +113,8 @@ end
 
 function HeadClaim:isValid()
   local block = spell:getBlock(self.pos)
-  return HeadClaim.getHeadOwnerId(block) == self.ownerId
+  local result = HeadClaim.getHeadOwnerId(block) == self.ownerId
+  return result;
 end
 
 function HeadClaim:__tostring()

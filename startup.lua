@@ -3,7 +3,6 @@
 local pkg = {}
 local initialize
 local DEFAULTS = {
-  datastore = Vec3(0,0,0)         ,
   claimingWidth = 21              ,
   claimingFrequency = 20          ,
   restictCreativePlayer = false   ,
@@ -13,7 +12,6 @@ local DEFAULTS = {
 function pkg.start(options)
   options = initialize(options, DEFAULTS)
   require('claiming-heads.claiming').start(
-    options.datastore,
     {width=options.claimingWidth,frequency=options.claimingFrequency, creativeBuildAllowed=not options.restictCreativePlayer},
     options.funcCanClaimPos
   )

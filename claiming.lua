@@ -11,10 +11,9 @@ local singleton = require "claiming-heads.singleton"
 local pkg = {}
 local log
 
--- Starts the claiming spell with the given position for storing all claim data,
--- the given options (with the attributes width, frequency, and creativeBuildAllowed),
+-- Starts the claiming spell with the given options (with the attributes width, frequency, and creativeBuildAllowed),
 -- and the given predicate function that decides if a specified position is allowed to be claimed.
-function pkg.start(storePos, options, funcCanClaimPos)
+function pkg.start(options, funcCanClaimPos)
   options = options or {}
   local width = options.width or 16
   local frequency = options.frequency or 20
@@ -22,7 +21,6 @@ function pkg.start(storePos, options, funcCanClaimPos)
   
   singleton(module)
   spell.data.claiming = {
-    storePos = storePos,
     claims = {},
     claimsByChunk = {}
   }
@@ -58,16 +56,24 @@ function pkg.start(storePos, options, funcCanClaimPos)
         return
       end
       local claim = HeadClaim.new(pos, width, ownerId)
-      local foreignClaim = pkg.getOverlappingForeignClaim(claim, event.player)
+      local foreignClaim = pkg.getOverlappingForeignClaim(claim, ownerId)
       if checkClaim and foreignClaim then
         event.canceled = true
-        spell:execute('tellraw '..event.player.name..' {"text":"This claim would overlap with the foreign '..tostring(foreignClaim)..'","color":"gold"}')
+        spell:execute('tellraw '..event.player.name..' {"text":"This claim would overlap with another claim","color":"gold"}')
       else
         pkg.addClaim(claim)
       end
     end
   end)
+  
+  local queue = Events.collect('BlockBreakEvent')
   while true do
+    local event = queue:next(0)
+    if event then
+      -- Check if we have to remove an invalid claim
+      pkg.removeInvalidClaimsAtPos(event.pos)
+    end
+    
     local players = Entities.find('@a')
     for _, player in pairs(players) do
       pkg.updatePlayer(player)
@@ -121,8 +127,7 @@ end
 local loadDataPending
 function pkg.loadData()
   loadDataPending = true
-  local storePos = pkg.getStorePos()
-  local data = datastore.load(storePos) or {}
+  local data = datastore.load() or {}
   for _, serializedClaim in pairs(data) do
     local claim = HeadClaim.deserialize(serializedClaim)
     pkg.addClaim(claim)
@@ -140,13 +145,7 @@ function pkg.saveData()
     local serializedClaim = claim:serialize()
     table.insert(data, serializedClaim)
   end
-  local storePos = pkg.getStorePos()
-  datastore.save(storePos, data)
-end
-
-function pkg.getStorePos()
-  local spell = pkg.getClaimingSpell()
-  return spell.data.claiming.storePos
+  datastore.save(data)
 end
 
 function pkg.getClaims()
@@ -223,6 +222,13 @@ function pkg.mayBuild(player, pos)
   return false
 end
 
+function pkg.removeInvalidClaimsAtPos(pos)
+  local claimsByChunk = pkg.getClaimsByChunk()
+  local chunk = pkg.getChunk(pos)
+  local claims = claimsByChunk[chunk] or {}
+  pkg.removeInvalidClaims(claims)
+end
+
 function pkg.getApplicableClaims(pos)
   local claimsByChunk = pkg.getClaimsByChunk()
   local chunk = pkg.getChunk(pos)
@@ -245,6 +251,7 @@ function pkg.getChunk(pos)
 end
 
 function pkg.removeInvalidClaims(claims)
+  local allClaims = pkg.getClaims()
   local invalidClaims = {}
   for _, claim in pairs(claims) do
     if not claim:isValid() then
