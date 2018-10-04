@@ -51,7 +51,7 @@ function pkg.start(options)
     if ownerId then
       local pos = event.pos
       local claim = HeadClaim.new(pos, width, ownerId)
-      local foreignClaim = pkg.getOverlappingForeignClaim(claim, ownerId)
+      local foreignClaim = pkg.getOverlappingForeignClaim(claim, event.player.uuid)
       if checkClaim and foreignClaim then
         event.canceled = true
         spell:execute('tellraw '..event.player.name..' {"text":"This claim would overlap with another claim","color":"gold"}')
@@ -114,6 +114,7 @@ function pkg.getOverlappingClaim(claim, claimPredicate)
       end
     end
   end
+  return nil
 end
 
 local claimingSpell
