@@ -30,27 +30,7 @@ These are the steps to install and run the Claiming Heads on your Minecraft Serv
     [The Claiming Heads Spell Pack](https://minecraft.curseforge.com/projects/claiming-heads-spell-pack/files) and place it
     into the `mods` directory of your Minecraft server.
     
-4. **Activate the Claiming Heads Spell on Server Startup**
-
-    Create a file called `startup.lua` and place it into the `config/wizards-of-lua/libs/shared` directory of your Minecraft server.
-    Insert the following lines into it:
-    ```lua
-    spell:execute([[ /lua require("claiming-heads.startup").start({
-      datastore=Vec3(0,0,0), claimingWidth=21, restictCreativePlayer=false
-    }) ]])
-    ```
-    The following options are supported:
-    * **datastore**: (Vec3) This is the position of the command block that is used as a storage device. The Claiming Heads spell will store the claiming locations, sizes, and owners there.
-    * **claimingWidth**: (Numeric) This defines the size of newly claimed areas. It's the distance measured in meters from the center to the northern, southern, western, and eastern border of the area. Please note that this only affects new claims. 
-    * **restictCreativePlayer**: (boolean) This defines whether creative players are prevented from building in claimed areas. Valid values are *true* and *false*.
-    * **claimingFrequency**: (numeric) This defines the number of game ticks that the Claiming Heads spell waits between two consecutive  checks of the player positions. Default is 20.
-    * **funcCanClaimPos**: (function) This defines a predicate function on a given position (Vec3) that should return a boolean value that decides whether anybody can claim that position in principle. Default is 
-        ```lua 
-        function(pos) return true; end
-        ```
-    
-5. **Restart the Server**
-
+4. **Restart the Server**
 
 ## Playing Instructions
 ### How to Claim an Area?
@@ -61,64 +41,89 @@ By removing this head the area becomes unprotected again.
 This is really easy. Just take both heads into your inventory, then claim an area with your own head first, and finally place the other head somewhere above or below of yours.
 
 ### How to Get a Claiming Head?
-#### By Command
+#### By Vanilla Command
 Just execute the following Minecraft command:
 ```
 /give PLAYER skull 1 3 {SkullOwner:"PLAYER"}
 ```
 Please replace both occurrences of *PLAYER* with the actual player's name.
-#### By Spell
-```lua
-/lua name=spell.owner.name; spell:execute([[/give %s skull 1 3 {SkullOwner:"%s"}]], name, name)
+#### By Spell Pack Command
 ```
-#### By Command Block
-For example, to create a "claiming head dispenser" just insert the following line into a command block and attach a button to it.
-```lua
-/lua p=Entities.find("@p")[1]; spell:execute([[/give %s skull 1 3 {SkullOwner:"%s"}]], p.name, p.name)
+/give-head <player> [<head's owner>]
 ```
+Examples:
+```
+/give-head adrodoc
+```
+gives adrodoc his own head.
+```
+/give-head adrodoc mickkay
+```
+gives adrodoc mickkay's head.
+```
+/give-head adrodoc @a
+```
+gives adrodoc the heads of all players logged in.
+```
+/give-head @a
+```
+gives all players their own head.
+```
+/give-head @a adrodoc
+```
+gives all players adrodoc's head.
+```
+/give-head @a @a
+```
+gives all players the heads of all players logged in.
+```
+/give-head @p
+```
+gives the closest player his or her own head.
+
+
+### How to Show the Borders of Claimed Areas?
+#### By Spell Pack Command
+```
+/show-claim
+```
+shows the border of the (closest) claimed area you are currently inside for some seconds.
 
 ## Advanced Configuration
 
+To configure this spell pack please [edit the file](http://www.wizards-of-lua.net/tutorials/importing_lua_files/) called `startup.lua`
+(which should be inside the `config/wizards-of-lua/libs/shared` directory of your Minecraft server).
+This can be done with ```/wol shared-file edit startup.lua```. 
+
+### How to Increase Claim Sizes?
+Just add the following lines to `startup.lua`.
+
+```lua
+Events.on("claiming-heads.StartupEvent"):call(function(event)
+  local data = event.data
+  data.claimingWidth = 28
+end)
+```
+This defines the size of new claimed areas. Actually the value 28 is the distance of the claim's center to its borders.
+
+Here is a list of all properties that can be configured:
+
+* **claimingWidth**: (Numeric) This defines the size of newly claimed areas. It's the distance measured in meters from the center to the northern, southern, western, and eastern border of the area. Please note that this only affects new claims. 
+* **restictCreativePlayer**: (boolean) This defines whether creative players are prevented from building in claimed areas. Valid values are *true* and *false*.
+* **claimingFrequency**: (numeric) This defines the number of game ticks that the Claiming Heads spell waits between two consecutive  checks of the player positions. Default is 20.
+* **enableCommands**: (boolean) This defines whether the built-in ```/give-head``` command should be registered. Default is true.
+
 ### How to Restrict Claims to Villages?
-If you want to restrict new claims to be allowed only inside "vital" villages (which are villages with living villagers), you
-can provide a proper function for the "funcCanClaimPos" option.
+If you want to restrict new claims to be allowed only inside populated villages (where villagers are living), you
+can intercept the "ClaimEvent" and cancel it, if it happend outside of a village.
 
-To do this, edit the file called `startup.lua` (which should be inside the `config/wizards-of-lua/libs/shared` directory of your Minecraft server) and replace the startup spell with the following lines:
-    
-```lua
-spell:execute([[ /lua require("claiming-heads.startup").start({
-    datastore=Vec3(0,0,0), claimingWidth=21, restictCreativePlayer=false,
-    funcCanClaimPos=function(pos) 
-      return spell.world:getNearestVillage(pos,10) ~= nil
-    end
-}) ]])
-```
-
-### How to Show Claimed Areas?
-Below is a handy function that shows the borders of the closest claimed area you are inside of.
-
-To add this function to your server, please create a file called `shared-profile.lua` and place it into the `config/wizards-of-lua/libs/shared` directory of your Minecraft server. Then insert the following lines into it:
+Just add the following lines to `startup.lua`.
 
 ```lua
-function showClaims()
-  local player = spell.owner
-  local claims = require('claiming-heads.claiming').getApplicableClaims(player.pos)
-  local closest = nil
-  for _,claim in pairs(claims) do
-    local dist = (claim.pos - player.pos):sqrMagnitude()
-    if not closest or dist < closest.dist then
-      closest = { claim=claim, dist=dist}
-    end
-  end
-  if closest then
-    local visualizer = require('claiming-heads.claimvisualizer')
-    visualizer.showBorders(player.name, closest.claim.pos, closest.claim.width)
-  end
-end
-```
-
-To cast a spell with this function, just open the chat line (by typing 'T') and send the following command:
-```lua
-/lua showClaims()
+Events.on("claiming-heads.ClaimEvent"):call(function(event)
+  local pos = event.data.pos
+  local isCloseToVillage = spell.world:getNearestVillage(pos, 10)
+  event.data.canceled = not isCloseToVillage
+end)
 ```
 

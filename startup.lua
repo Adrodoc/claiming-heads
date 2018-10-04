@@ -1,21 +1,35 @@
 -- claiming-heads/startup.lua
 
-local pkg = {}
+--[[
+
+Events.on("claiming-heads.StartupEvent"):call(function(event)
+  local data = event.data
+  data.claimingWidth = 28
+end)
+
+Events.on("claiming-heads.ClaimEvent"):call(function(event)
+  local pos = event.data.pos
+  
+  -- local isCloseToVillage = spell.world:getNearestVillage(pos, 10)
+  --event.data.canceled = not isCloseToVillage
+  
+  --event.canceled = not isCloseToVillage -- TODO fix this in WoL
+  event.data.canceled = false
+end)
+
+]]--
+
+
+local module = ...
+local start
 local initialize
 local DEFAULTS = {
-  claimingWidth = 21              ,
-  claimingFrequency = 20          ,
-  restictCreativePlayer = false   ,
-  funcCanClaimPos = function(pos) return true end
+  claimingWidth = 21            ,
+  claimingFrequency = 20        ,
+  restictCreativePlayer = false ,
+  enableCommands = true
 }
-
-function pkg.start(options)
-  options = initialize(options, DEFAULTS)
-  require('claiming-heads.claiming').start(
-    {width=options.claimingWidth,frequency=options.claimingFrequency, creativeBuildAllowed=not options.restictCreativePlayer},
-    options.funcCanClaimPos
-  )
-end
+local STARTUP_EVENT = 'claiming-heads.StartupEvent'
 
 function initialize(target, defaults)
   target = target or {}
@@ -27,4 +41,16 @@ function initialize(target, defaults)
   return target
 end
 
-return pkg
+local options = DEFAULTS
+Events.fire(STARTUP_EVENT,options)
+
+require('claiming-heads.give-head').enable(options.enableCommands)
+require('claiming-heads.show-claim').enable(options.enableCommands)
+  
+require('claiming-heads.claiming').start(
+  { width                = options.claimingWidth,
+    frequency            = options.claimingFrequency,
+    creativeBuildAllowed = not options.restictCreativePlayer
+  }
+)
+

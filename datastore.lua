@@ -15,7 +15,7 @@ function pkg.save(data)
   file:write(text)
   file:close()
   local t2 = Time.realtime
-  print("save duration", t2-t1)
+  --print("save duration", t2-t1)
 end
 
 function pkg.load()
@@ -36,7 +36,7 @@ function pkg.load()
     result = func()
   end
   local t2 = Time.realtime
-  print("load duration", t2-t1)
+  --print("load duration", t2-t1)
   return result
 end
 

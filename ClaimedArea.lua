@@ -35,11 +35,12 @@ function ClaimedSquare.new(pos, width, ownerId)
 end
 
 function ClaimedSquare:mayBuild(player)
-  if type(player)=="player" then
+  if type(player)=="Player" then
     return self.ownerId == player.uuid
   elseif type(player)=="string" then
     return self.ownerId == player
   end
+  error("Expected argument to be a player or a string, but was %s",type(player))
 end
 
 function ClaimedSquare:getChunks()

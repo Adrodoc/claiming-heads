@@ -1,19 +1,19 @@
 -- claiming-heads/claiming.lua
 
+local pkg = {}
 local module = ...
+local CLAIM_EVENT = "claiming-heads.ClaimEvent"
 
 require 'claiming-heads.ClaimedArea'
 require 'claiming-heads.Spell'
 local datastore = require "claiming-heads.datastore"
 local listmultimap = require "claiming-heads.listmultimap"
 local singleton = require "claiming-heads.singleton"
-
-local pkg = {}
+local canClaimPos
 local log
 
--- Starts the claiming spell with the given options (with the attributes width, frequency, and creativeBuildAllowed),
--- and the given predicate function that decides if a specified position is allowed to be claimed.
-function pkg.start(options, funcCanClaimPos)
+-- Starts the claiming spell with the given options (with the attributes width, frequency, and creativeBuildAllowed).
+function pkg.start(options)
   options = options or {}
   local width = options.width or 16
   local frequency = options.frequency or 20
@@ -50,19 +50,19 @@ function pkg.start(options, funcCanClaimPos)
     local ownerId = HeadClaim.getHeadOwnerId(block)
     if ownerId then
       local pos = event.pos
-      if checkClaim and not funcCanClaimPos(pos) then
-        event.canceled = true
-        spell:execute('tellraw '..event.player.name..' {"text":"You are not allowed to claim here","color":"gold"}')
-        return
-      end
       local claim = HeadClaim.new(pos, width, ownerId)
       local foreignClaim = pkg.getOverlappingForeignClaim(claim, ownerId)
       if checkClaim and foreignClaim then
         event.canceled = true
         spell:execute('tellraw '..event.player.name..' {"text":"This claim would overlap with another claim","color":"gold"}')
-      else
-        pkg.addClaim(claim)
+        return
       end
+      if checkClaim and not canClaimPos(pos) then
+        event.canceled = true
+        spell:execute('tellraw '..event.player.name..' {"text":"You are not allowed to claim here","color":"gold"}')
+        return
+      end  
+      pkg.addClaim(claim)
     end
   end)
   
@@ -261,6 +261,12 @@ function pkg.removeInvalidClaims(claims)
   for _, claim in pairs(invalidClaims) do
     pkg.removeClaim(claim)
   end
+end
+
+function canClaimPos(pos)
+  local data = {canceled=false,pos=pos}
+  Events.fire(CLAIM_EVENT, data)
+  return not data.canceled
 end
 
 -- Logs the given message into the chat
