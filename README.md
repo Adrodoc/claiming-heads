@@ -11,7 +11,7 @@ You can give the Claiming Heads mod a try at our alpha server: ```mc.wizards-of-
 
 ## How to Install?
 This spell pack is dependent on [Minecraft Forge](http://files.minecraftforge.net/maven/net/minecraftforge/forge/index_1.12.2.html) 
-and the [Wizards of Lua Modification](https://minecraft.curseforge.com/projects/wizards-of-lua/files).
+and the [Wizards of Lua Modification](https://minecraft.curseforge.com/projects/wizards-of-lua/files), version 2.4.0 or later.
 
 These are the steps to install and run the Claiming Heads on your Minecraft Server:
 
