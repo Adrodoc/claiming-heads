@@ -5,8 +5,6 @@ local pkg = {}
 local module = ...
 local CMD = 'show-claim'
 local showError
-local getPlayers
-local namesOf
 local tell
 
 function pkg.enable(value)
@@ -14,7 +12,7 @@ function pkg.enable(value)
   if value then
     Commands.register(CMD,string.format([[
       require('%s').showClaim(...)
-    ]], module))
+    ]], module), "/showClaim", 1)
   else
     pcall(function() 
       Commands.deregister(CMD)
@@ -36,6 +34,22 @@ function pkg.showClaim()
     local visualizer = require('claiming-heads.claimvisualizer')
     visualizer.showBorders(player.name, closest.claim.pos, closest.claim.width)
   end
+end
+
+
+function showError(message, ...)
+  local n = select('#', ...)
+  if n>0 then
+    message = string.format(message, ...)
+  end
+  tell(spell.owner.name, message, 'red')
+end
+
+function tell(to, message, color)
+  color = color or 'white'
+  spell:execute([[
+    /tellraw %s [{"text":"%s","color":"%s"}]
+  ]], to, message, color)
 end
 
 return pkg

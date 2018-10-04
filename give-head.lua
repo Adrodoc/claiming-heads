@@ -4,6 +4,7 @@
 local pkg = {}
 local module = ...
 local CMD = 'give-head'
+local USAGE = "/give-head [<player>] [<head's owner>]"
 local showError
 local getPlayers
 local namesOf
@@ -14,7 +15,7 @@ function pkg.enable(value)
   if value then
     Commands.register(CMD,string.format([[
       require('%s').giveHead(...)
-    ]], module))
+    ]], module), USAGE, 1)
   else
     pcall(function() 
       Commands.deregister(CMD)
@@ -24,7 +25,7 @@ end
 
 function pkg.giveHead(toSelector, headSelector)
   if not toSelector then
-    showError("Usage: /give-head <player> [<head's owner>]", to)
+    showError("Usage: "..USAGE)
     return
   end
   local toPlayers = getPlayers(toSelector)
