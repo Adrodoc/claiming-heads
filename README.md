@@ -111,7 +111,7 @@ Here is a list of all properties that can be configured:
 * **claimingWidth**: (Numeric) This defines the size of newly claimed areas. It's the distance measured in meters from the center to the northern, southern, western, and eastern border of the area. Please note that this only affects new claims. 
 * **restictCreativePlayer**: (boolean) This defines whether creative players are prevented from building in claimed areas. Valid values are *true* and *false*.
 * **claimingFrequency**: (numeric) This defines the number of game ticks that the Claiming Heads spell waits between two consecutive  checks of the player positions. Default is 20.
-* **enableCommands**: (boolean) This defines whether the built-in ```/give-head``` command should be registered. Default is true.
+* **enableCommands**: (boolean) This defines whether the built-in commands ```/give-head``` and ```/show-claim``` should be registered. Default is true.
 
 ### How to Restrict Claims to Villages?
 If you want to restrict new claims to be allowed only inside populated villages (where villagers are living), you
