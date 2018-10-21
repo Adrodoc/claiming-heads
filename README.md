@@ -127,3 +127,30 @@ Events.on("claiming-heads.ClaimEvent"):call(function(event)
 end)
 ```
 
+### How to Allow of Deny Certain Positions?
+You can override the decision whether a player can build at a given position by intercepting the "MayBuildEvent". 
+
+For example, the following code allows that a player can destroy a block even when it's part of a foreign claim when he is holding an item tagged with "CanDestroy" for
+that specific block.
+
+Just add the following lines to `startup.lua`.
+
+```lua
+Events.on("claiming-heads.MayBuildEvent"):call(function(event)
+  local item = event.data.player.mainhand
+  if item then
+    local nbt = item.nbt
+    if nbt and nbt.tag and nbt.tag.CanDestroy then
+      for _,name in pairs(nbt.tag.CanDestroy) do
+        if name == event.data.block.name then
+          event.data.result = true
+          break
+        end
+      end
+    end
+  end
+end)
+
+```
+
+

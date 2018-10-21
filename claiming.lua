@@ -3,6 +3,7 @@
 local pkg = {}
 local module = ...
 local CLAIM_EVENT = "claiming-heads.ClaimEvent"
+local MAY_BUILD_EVENT = "claiming-heads.MayBuildEvent"
 
 require 'claiming-heads.ClaimedArea'
 require 'claiming-heads.Spell'
@@ -18,7 +19,6 @@ function pkg.start(options)
   local width = options.width or 16
   local frequency = options.frequency or 20
   local creativeBuildAllowed = options.creativeBuildAllowed or false
-  
   singleton(module)
   spell.data.claiming = {
     claims = {},
@@ -211,16 +211,24 @@ end
 
 function pkg.mayBuild(player, pos)
   pos = pos or player.pos
+  
+  local result = false
   local claims = pkg.getApplicableClaims(pos)
   if next(claims) == nil then
-    return true
-  end
-  for _, claim in pairs(claims) do
-    if claim:mayBuild(player) then
-      return true
+    result = true
+  else
+    for _, claim in pairs(claims) do
+      if claim:mayBuild(player) then
+        result = true
+        break
+      end
     end
   end
-  return false
+  spell.pos = pos
+  local block = spell.block
+  local data = {pos = pos, player = player, result = result, block = block}
+  Events.fire(MAY_BUILD_EVENT,data)
+  return data.result
 end
 
 function pkg.removeInvalidClaimsAtPos(pos)

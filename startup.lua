@@ -17,8 +17,23 @@ Events.on("claiming-heads.ClaimEvent"):call(function(event)
   event.data.canceled = false
 end)
 
-]]--
 
+Events.on("claiming-heads.MayBuildEvent"):call(function(event)
+  local item = event.data.player.mainhand
+  if item then
+    local nbt = item.nbt
+    if nbt and nbt.tag and nbt.tag.CanDestroy then
+      for _,name in pairs(nbt.tag.CanDestroy) do
+        if name == event.data.block.name then
+          event.data.result = true
+          break
+        end
+      end
+    end
+  end
+end)
+
+]]--
 
 local module = ...
 local start
