@@ -1,7 +1,7 @@
--- claiming/claimvisualizer.lua
+-- claiming-heads/claimvisualizer.lua
 
--- /lua require('claiming.claimvisualizer').showBorders(playername, center, width)
--- /lua cs=require('claiming.claiming').getApplicableClaims(spell.owner.pos) for _,c in pairs(cs) do require('claiming.claimvisualizer').showBorders(spell.owner.name, c.pos, c.width) end
+-- /lua require('claiming-heads.claimvisualizer').showBorders(playername, center, width)
+-- /lua cs=require('claiming-heads.claiming').getApplicableClaims(spell.owner.pos) for _,c in pairs(cs) do require('claiming-heads.claimvisualizer').showBorders(spell.owner.name, c.pos, c.width) end
 
 local module = ...
 
@@ -25,13 +25,13 @@ function pkg.showBorders(playername, center, width)
   if not width then
     error("missing width")
   end
-  
+
   local a = center + Vec3(width,0,width)
   local b = center + Vec3(-width,0,-width)
 
   local y=math.floor(player.pos.y)
   for k=1,1 do
-    for i=-1,4 do 
+    for i=-1,4 do
       rect(a,b,y+i, player)
       if k>1 then
         sleep(20)

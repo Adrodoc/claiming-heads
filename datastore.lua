@@ -1,28 +1,44 @@
--- claiming/datastore.lua
-local pkg = {}
+-- claiming-heads/datastore.lua
 
-function pkg.save(pos, data)
-  local oldPos = spell.pos
+local pkg = {}
+local dir = "wol/claiming-heads"
+local filename = dir.."/claims.txt"
+
+
+function pkg.save(data)
+  local t1 = Time.realtime
+  System.makeDir(dir)
+  local file,err = io.open(filename,"w")
+  if err then
+    error(err)
+  end
   local text = str(data)
-  spell.pos = pos
-  spell.block = Blocks.get("command_block"):withNbt({Command=text})
-  spell.pos = oldPos
+  file:write(text)
+  file:close()
+  local t2 = Time.realtime
+  --print("save duration", t2-t1)
 end
 
-function pkg.load(pos)
-  local oldPos = spell.pos
-  spell.pos = pos
-  local block = spell.block
-  if block.nbt and block.nbt.Command then
-    local text = block.nbt.Command
-    if text ~= nil then
-      local code = "return "..text
-      local func = load(code)
-      local result = func()
-      return result
-    end
+function pkg.load()
+  local t1 = Time.realtime
+  if not System.isFile(filename) then
+    return nil
   end
-  return nil
+  local file,err = io.open(filename,"r")
+  if err then
+    error(err)
+  end
+  local text = file:read("*a")
+  file:close()
+  local result = nil
+  if text ~= nil then
+    local code = "return "..text
+    local func = load(code)
+    result = func()
+  end
+  local t2 = Time.realtime
+  --print("load duration", t2-t1)
+  return result
 end
 
 return pkg

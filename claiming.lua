@@ -1,33 +1,37 @@
-local module = ...
-
-require 'claiming.ClaimedArea'
-require 'claiming.Spell'
-local datastore = require "claiming.datastore"
-local listmultimap = require "claiming.listmultimap"
-local singleton = require "claiming.singleton"
+-- claiming-heads/claiming.lua
 
 local pkg = {}
+local module = ...
+local CLAIM_EVENT = "claiming-heads.ClaimEvent"
+local MAY_BUILD_EVENT = "claiming-heads.MayBuildEvent"
+
+require 'claiming-heads.ClaimedArea'
+require 'claiming-heads.Spell'
+local datastore = require "claiming-heads.datastore"
+local listmultimap = require "claiming-heads.listmultimap"
+local singleton = require "claiming-heads.singleton"
+local canClaimPos
 local log
 
--- Starts the claiming spell with the given position for storing all claim data,
--- the given options (with the attributes width, frequency, and creativeBuildAllowed),
--- and the given predicate function that decides if a specified position is allowed to be claimed.
-function pkg.start(storePos, options, funcCanClaimPos)
+-- Starts the claiming spell with the given options (with the attributes width, frequency, and creativeBuildAllowed).
+function pkg.start(options)
   options = options or {}
   local width = options.width or 16
   local frequency = options.frequency or 20
   local creativeBuildAllowed = options.creativeBuildAllowed or false
-  
   singleton(module)
   spell.data.claiming = {
-    storePos = storePos,
     claims = {},
     claimsByChunk = {}
   }
   pkg.loadData()
   pkg.setCreativeBuildAllowed(creativeBuildAllowed)
-  
+
   Events.on('BlockPlaceEvent', 'BlockBreakEvent'):call(function(event)
+    if event.player.dimension ~= 0 then
+      -- claiming is only supported in the overworld
+      return
+    end
     if event.player.gamemode == "creative" and pkg.isCreativeBuildAllowed() then
       return
     end
@@ -37,27 +41,39 @@ function pkg.start(storePos, options, funcCanClaimPos)
     end
   end)
   Events.on('BlockPlaceEvent'):call(function(event)
+    if event.player.dimension ~= 0 then
+      -- claiming is only supported in the overworld
+      return
+    end
     local checkClaim = not (event.player.gamemode == "creative" and pkg.isCreativeBuildAllowed())
     local block = spell:getBlock(event.pos) -- Workaround for https://github.com/wizards-of-lua/wizards-of-lua/issues/188
     local ownerId = HeadClaim.getHeadOwnerId(block)
     if ownerId then
       local pos = event.pos
-      if checkClaim and not funcCanClaimPos(pos) then
+      local claim = HeadClaim.new(pos, width, ownerId)
+      local foreignClaim = pkg.getOverlappingForeignClaim(claim, event.player.uuid)
+      if checkClaim and foreignClaim then
+        event.canceled = true
+        spell:execute('tellraw '..event.player.name..' {"text":"This claim would overlap with another claim","color":"gold"}')
+        return
+      end
+      if checkClaim and not canClaimPos(pos) then
         event.canceled = true
         spell:execute('tellraw '..event.player.name..' {"text":"You are not allowed to claim here","color":"gold"}')
         return
       end
-      local claim = HeadClaim.new(pos, width, ownerId)
-      local foreignClaim = pkg.getOverlappingForeignClaim(claim, event.player)
-      if checkClaim and foreignClaim then
-        event.canceled = true
-        spell:execute('tellraw '..event.player.name..' {"text":"This claim would overlap with the foreign '..tostring(foreignClaim)..'","color":"gold"}')
-      else
-        pkg.addClaim(claim)
-      end
+      pkg.addClaim(claim)
     end
   end)
+
+  local queue = Events.collect('BlockBreakEvent')
   while true do
+    local event = queue:next(0)
+    if event then
+      -- Check if we have to remove an invalid claim
+      pkg.removeInvalidClaimsAtPos(event.pos)
+    end
+
     local players = Entities.find('@a')
     for _, player in pairs(players) do
       pkg.updatePlayer(player)
@@ -98,6 +114,7 @@ function pkg.getOverlappingClaim(claim, claimPredicate)
       end
     end
   end
+  return nil
 end
 
 local claimingSpell
@@ -111,8 +128,7 @@ end
 local loadDataPending
 function pkg.loadData()
   loadDataPending = true
-  local storePos = pkg.getStorePos()
-  local data = datastore.load(storePos) or {}
+  local data = datastore.load() or {}
   for _, serializedClaim in pairs(data) do
     local claim = HeadClaim.deserialize(serializedClaim)
     pkg.addClaim(claim)
@@ -130,13 +146,7 @@ function pkg.saveData()
     local serializedClaim = claim:serialize()
     table.insert(data, serializedClaim)
   end
-  local storePos = pkg.getStorePos()
-  datastore.save(storePos, data)
-end
-
-function pkg.getStorePos()
-  local spell = pkg.getClaimingSpell()
-  return spell.data.claiming.storePos
+  datastore.save(data)
 end
 
 function pkg.getClaims()
@@ -201,16 +211,31 @@ end
 
 function pkg.mayBuild(player, pos)
   pos = pos or player.pos
+
+  local result = false
   local claims = pkg.getApplicableClaims(pos)
   if next(claims) == nil then
-    return true
-  end
-  for _, claim in pairs(claims) do
-    if claim:mayBuild(player) then
-      return true
+    result = true
+  else
+    for _, claim in pairs(claims) do
+      if claim:mayBuild(player) then
+        result = true
+        break
+      end
     end
   end
-  return false
+  spell.pos = pos
+  local block = spell.block
+  local data = {pos = pos, player = player, result = result, block = block}
+  Events.fire(MAY_BUILD_EVENT,data)
+  return data.result
+end
+
+function pkg.removeInvalidClaimsAtPos(pos)
+  local claimsByChunk = pkg.getClaimsByChunk()
+  local chunk = pkg.getChunk(pos)
+  local claims = claimsByChunk[chunk] or {}
+  pkg.removeInvalidClaims(claims)
 end
 
 function pkg.getApplicableClaims(pos)
@@ -235,6 +260,7 @@ function pkg.getChunk(pos)
 end
 
 function pkg.removeInvalidClaims(claims)
+  local allClaims = pkg.getClaims()
   local invalidClaims = {}
   for _, claim in pairs(claims) do
     if not claim:isValid() then
@@ -244,6 +270,12 @@ function pkg.removeInvalidClaims(claims)
   for _, claim in pairs(invalidClaims) do
     pkg.removeClaim(claim)
   end
+end
+
+function canClaimPos(pos)
+  local data = {canceled=false,pos=pos}
+  Events.fire(CLAIM_EVENT, data)
+  return not data.canceled
 end
 
 -- Logs the given message into the chat
