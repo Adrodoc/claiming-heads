@@ -4,6 +4,7 @@ local pkg = {}
 local module = ...
 local CLAIM_EVENT = "claiming-heads.ClaimEvent"
 local MAY_BUILD_EVENT = "claiming-heads.MayBuildEvent"
+local ADVENTURE_MODE_SET_BY_CLAIMING_MOD = "claiming-heads.gamemode-set-by-claiming-mod"
 
 require 'claiming-heads.ClaimedArea'
 require 'claiming-heads.Spell'
@@ -196,16 +197,17 @@ function pkg.updatePlayer(player)
     return
   end
   if player.dimension ~= 0 then
-    if player.gamemode == 'adventure' then
+    if player.gamemode == 'adventure' and player:removeTag(ADVENTURE_MODE_SET_BY_CLAIMING_MOD) then
       player.gamemode = 'survival'
     end
     return -- claiming is only supported in the overworld
   end
   local mayBuild = pkg.mayBuild(player)
-  if mayBuild and player.gamemode == 'adventure' then
+  if mayBuild and player.gamemode == 'adventure' and player:removeTag(ADVENTURE_MODE_SET_BY_CLAIMING_MOD) then
     player.gamemode = 'survival'
   elseif not mayBuild and player.gamemode == 'survival' then
     player.gamemode = 'adventure'
+    player:addTag(ADVENTURE_MODE_SET_BY_CLAIMING_MOD)
   end
 end
 
