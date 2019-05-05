@@ -152,3 +152,20 @@ Events.on("claiming-heads.MayBuildEvent"):call(function(event)
 end)
 
 ```
+
+### How do I Check Whether or not a Player May Build/Destroy Within a Given Position?
+To check, if a specific player is allowed to build at a specific position, call 
+
+`claiming.mayBuild(player,pos)`
+
+#### Example
+```lua
+local player = spell.owner
+local pos = player.pos
+
+local claiming = require('claiming-heads.claiming')
+local mayBuild = claiming.mayBuild(player, pos)
+print('mayBuild', mayBuild)
+```
+
+
